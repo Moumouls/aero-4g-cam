@@ -131,6 +131,7 @@ jobs:
               env:
                   ANDROID_HOME: /usr/local/lib/android/sdk
                   ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+                  VERBOSE: "1"
 
             - name: Cleanup
               if: always()

@@ -38,11 +38,11 @@ async function recordCamera() {
 
     const emailInput = await driver.$(IDS.EMAIL_INPUT);
     await emailInput.waitForDisplayed({ timeout: 30000 });
-    await emailInput.setValue(process.env.UBOX_EMAIL);
+    await emailInput.setValue(process.env.UBOX_EMAIL, { mask: true });
 
     const passwordInput = await driver.$(IDS.PASSWORD_INPUT);
     await passwordInput.waitForDisplayed({ timeout: 30000 });
-    await passwordInput.setValue(process.env.UBOX_PASSWORD);
+    await passwordInput.setValue(process.env.UBOX_PASSWORD, { mask: true });
 
     await driver.startRecordingScreen({
         videoSize: '1280x720',
