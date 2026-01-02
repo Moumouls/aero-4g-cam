@@ -108,11 +108,6 @@ jobs:
                     -d pixel_5 \
                     --force
 
-            - name: Install Appium driver
-              run: |
-                  yarn appium:install-driver
-                  yarn appium:list-drivers
-
             - name: Create .env file from secrets
               run: |
                   cat > .env << EOF
