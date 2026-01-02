@@ -40,12 +40,6 @@ jobs:
             - name: Install dependencies
               run: yarn install --immutable
 
-            - name: Setup Java (required for Android SDK)
-              uses: actions/setup-java@v4
-              with:
-                  distribution: "temurin"
-                  java-version: "17"
-
             - name: Extract XAPK to split APKs
               run: |
                   # Extract XAPK (it's a ZIP file)
@@ -70,12 +64,6 @@ jobs:
                     echo "⚠️ UBox.xapk not found, assuming split-apks already exist"
                   fi
 
-            - name: Enable KVM (for faster emulation)
-              run: |
-                  echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-                  sudo udevadm control --reload-rules
-                  sudo udevadm trigger --name-match=kvm
-
             - name: AVD cache
               uses: actions/cache@v4
               id: avd-cache
@@ -83,7 +71,7 @@ jobs:
                   path: |
                       ~/.android/avd/*
                       ~/.android/adb*
-                  key: avd-33-x86_64-google_apis
+                  key: avd-33-arm64-v8a-google_apis
 
             - name: Create .env file from secrets
               run: |
