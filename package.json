@@ -1,0 +1,36 @@
+{
+  "name": "aero-4g-cam",
+  "version": "1.0.0",
+  "description": "Automatisation GitHub pour enregistrement d'écran Android UBox et upload sur Cloudflare R2",
+  "main": "src/automation/camera-recorder.js",
+  "type": "commonjs",
+  "scripts": {
+    "setup": "./setup.sh",
+    "dev": "./scripts/dev.sh",
+    "start": "./scripts/start.sh",
+    "appium:install-driver": "appium driver install uiautomator2",
+    "appium:list-drivers": "appium driver list"
+  },
+  "keywords": [
+    "android",
+    "appium",
+    "screen-recording",
+    "cloudflare-r2"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.700.0",
+    "@wdio/cli": "^9.4.0",
+    "@wdio/local-runner": "^9.4.0",
+    "@wdio/spec-reporter": "^9.4.0",
+    "appium": "^2.12.1",
+    "dotenv": "^16.4.7",
+    "webdriverio": "^9.4.0"
+  },
+  "devDependencies": {
+    "@wdio/appium-service": "^9.4.0",
+    "appium-uiautomator2-driver": "^3.8.3"
+  },
+  "packageManager": "yarn@4.12.0"
+}
