@@ -19,10 +19,23 @@ jobs:
               uses: actions/setup-node@v4
               with:
                   node-version: "24.9"
-                  cache: "yarn"
 
             - name: Enable Yarn
               run: corepack enable
+
+            - name: Get Yarn cache directory
+              id: yarn-cache-dir-path
+              run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+            - name: Cache Yarn dependencies
+              uses: actions/cache@v4
+              with:
+                  path: |
+                      ${{ steps.yarn-cache-dir-path.outputs.dir }}
+                      node_modules
+                  key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+                  restore-keys: |
+                      ${{ runner.os }}-yarn-
 
             - name: Install dependencies
               run: yarn install --immutable
