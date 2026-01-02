@@ -5,9 +5,9 @@ on:
 
 jobs:
     generate-video:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04-arm
 
-        timeout-minutes: 10
+        timeout-minutes: 30
 
         steps:
             - name: Checkout repository
@@ -45,20 +45,6 @@ jobs:
               with:
                   distribution: "temurin"
                   java-version: "17"
-
-            - name: Setup Android SDK
-              uses: android-actions/setup-android@v3
-
-            - name: Install Android SDK components
-              run: |
-                  # Accept licenses
-                  yes | sdkmanager --licenses || true
-
-                  # Install required SDK components for x86_64 emulation
-                  sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.0"
-                  sdkmanager "system-images;android-33;google_apis;x86_64"
-                  sdkmanager "emulator"
-                  sdkmanager "cmdline-tools;latest"
 
             - name: Extract XAPK to split APKs
               run: |
@@ -99,15 +85,6 @@ jobs:
                       ~/.android/adb*
                   key: avd-33-x86_64-google_apis
 
-            - name: Create AVD if not cached
-              if: steps.avd-cache.outputs.cache-hit != 'true'
-              run: |
-                  echo "no" | avdmanager create avd \
-                    -n test_emulator \
-                    -k "system-images;android-33;google_apis;x86_64" \
-                    -d pixel_5 \
-                    --force
-
             - name: Create .env file from secrets
               run: |
                   cat > .env << EOF
@@ -126,17 +103,58 @@ jobs:
                   CI=true
                   EOF
 
-            - name: Run video generation
-              run: yarn start
-              env:
-                  ANDROID_HOME: /usr/local/lib/android/sdk
-                  ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-                  VERBOSE: "1"
+            - name: Start Appium server
+              run: |
+                  echo "📱 Starting Appium server..."
+                  yarn exec appium --allow-cors > /tmp/appium.log 2>&1 &
+                  echo $! > /tmp/appium.pid
+
+                  # Wait for Appium to be ready
+                  echo "Waiting for Appium to start..."
+                  for i in {1..30}; do
+                      if curl -s http://localhost:4723/status > /dev/null 2>&1; then
+                          echo "✅ Appium is ready"
+                          break
+                      fi
+                      if [ $i -eq 30 ]; then
+                          echo "❌ Appium failed to start"
+                          cat /tmp/appium.log
+                          exit 1
+                      fi
+                      sleep 1
+                  done
+
+            - name: Run Android Emulator and Tests
+              uses: reactivecircus/android-emulator-runner@v2
+              with:
+                  api-level: 33
+                  target: google_apis
+                  arch: arm64-v8a
+                  profile: pixel_5
+                  force-avd-creation: false
+                  emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+                  disable-animations: true
+                  script: |
+                      # Make script executable
+                      chmod +x scripts/install-app.sh
+
+                      # Install APKs and prepare device
+                      ./scripts/install-app.sh
+
+                      # Run the camera recorder automation
+                      VERBOSE=1 node src/automation/camera-recorder.js
 
             - name: Cleanup
               if: always()
               run: |
-                  # Kill any lingering processes
-                  pkill -f emulator || true
+                  # Kill Appium server
+                  if [ -f /tmp/appium.pid ]; then
+                      kill $(cat /tmp/appium.pid) 2>/dev/null || true
+                  fi
                   pkill -f appium || true
-                  adb kill-server || true
+
+                  # Show Appium logs if they exist
+                  if [ -f /tmp/appium.log ]; then
+                      echo "📋 Appium logs:"
+                      tail -100 /tmp/appium.log
+                  fi
