@@ -5,7 +5,7 @@ on:
 
 jobs:
     generate-video:
-        runs-on: ubuntu-24.04-arm
+        runs-on: ubuntu-latest
 
         timeout-minutes: 30
 
@@ -73,39 +73,6 @@ jobs:
             - name: Setup Android SDK
               uses: android-actions/setup-android@v3
 
-            - name: AVD cache
-              uses: actions/cache@v4
-              id: avd-cache
-              with:
-                  path: |
-                      ~/.android/avd/*
-                      ~/.android/adb*
-                  key: avd-33-arm64-v8a-${{ runner.os }}-${{ runner.arch }}
-
-            - name: Install Android SDK components
-              if: steps.avd-cache.outputs.cache-hit != 'true'
-              run: |
-                  sdkmanager \
-                      "platform-tools" \
-                      "platforms;android-33" \
-                      "emulator" \
-                      "system-images;android-33;google_apis;arm64-v8a" \
-                      "build-tools;33.0.0"
-
-            - name: Create AVD
-              run: |
-                  # Create AVD if it doesn't exist
-                  if ! avdmanager list avd | grep -q "test_emulator"; then
-                      echo "Creating AVD..."
-                      echo "no" | avdmanager create avd \
-                          -n test_emulator \
-                          -k "system-images;android-33;google_apis;arm64-v8a" \
-                          -d pixel_5 \
-                          --force
-                  else
-                      echo "AVD already exists"
-                  fi
-
             - name: Create .env file from secrets
               run: |
                   cat > .env << EOF
@@ -145,56 +112,31 @@ jobs:
                       sleep 1
                   done
 
-            - name: Start Android Emulator
+            - name: Enable KVM group perms
               run: |
-                  echo "🚀 Starting Android Emulator..."
+                  echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger --name-match=kvm
 
-                  # Start emulator in headless mode
-                  emulator -avd test_emulator \
-                      -no-snapshot-load \
-                      -no-snapshot-save \
-                      -no-window \
-                      -gpu swiftshader_indirect \
-                      -noaudio \
-                      -no-boot-anim \
-                      > /tmp/emulator.log 2>&1 &
-                  echo $! > /tmp/emulator.pid
+            - name: Run Emulator and Automation
+              uses: reactivecircus/android-emulator-runner@v2
+              with:
+                  api-level: 33
+                  target: google_apis
+                  arch: arm64-v8a
+                  profile: pixel_5
+                  disable-animations: true
+                  force-avd-creation: false
+                  emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+                  script: |
+                      # Make script executable
+                      chmod +x scripts/install-app.sh
 
-                  # Wait for device to be ready
-                  echo "Waiting for device..."
-                  adb wait-for-device
+                      # Install APKs and prepare device
+                      ./scripts/install-app.sh
 
-                  # Wait for boot to complete
-                  echo "Waiting for boot to complete..."
-                  for i in {1..60}; do
-                      BOOT_COMPLETED=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-                      if [ "$BOOT_COMPLETED" = "1" ]; then
-                          echo "✅ Emulator is ready"
-                          break
-                      fi
-                      if [ $i -eq 60 ]; then
-                          echo "❌ Emulator boot timeout"
-                          cat /tmp/emulator.log
-                          exit 1
-                      fi
-                      sleep 2
-                  done
-
-                  # Disable animations
-                  adb shell settings put global window_animation_scale 0.0
-                  adb shell settings put global transition_animation_scale 0.0
-                  adb shell settings put global animator_duration_scale 0.0
-
-            - name: Install APKs and Run Automation
-              run: |
-                  # Make script executable
-                  chmod +x scripts/install-app.sh
-
-                  # Install APKs and prepare device
-                  ./scripts/install-app.sh
-
-                  # Run the camera recorder automation
-                  VERBOSE=1 node src/automation/camera-recorder.js
+                      # Run the camera recorder automation
+                      VERBOSE=1 node src/automation/camera-recorder.js
 
             - name: Cleanup
               if: always()
@@ -205,20 +147,8 @@ jobs:
                   fi
                   pkill -f appium || true
 
-                  # Kill Emulator
-                  if [ -f /tmp/emulator.pid ]; then
-                      kill $(cat /tmp/emulator.pid) 2>/dev/null || true
-                  fi
-                  pkill -f "emulator.*test_emulator" || true
-                  adb emu kill 2>/dev/null || true
-
                   # Show logs if they exist
                   if [ -f /tmp/appium.log ]; then
                       echo "📋 Appium logs:"
                       tail -100 /tmp/appium.log
-                  fi
-
-                  if [ -f /tmp/emulator.log ]; then
-                      echo "📋 Emulator logs:"
-                      tail -100 /tmp/emulator.log
                   fi
