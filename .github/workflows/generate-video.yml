@@ -90,13 +90,6 @@ jobs:
                   # Verify KVM is accessible
                   ls -la /dev/kvm
 
-            - name: Update Android Emulator to latest version
-              run: |
-                  echo "📦 Updating Android Emulator to latest version..."
-                  ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --update
-                  ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "emulator"
-                  ${ANDROID_SDK_ROOT}/emulator/emulator -version
-
             - name: Run Android Emulator with ARM translation
               uses: reactivecircus/android-emulator-runner@v2
               with:
