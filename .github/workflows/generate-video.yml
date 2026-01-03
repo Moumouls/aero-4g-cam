@@ -5,7 +5,7 @@ on:
 
 jobs:
     generate-video:
-        runs-on: macos-latest
+        runs-on: ubuntu-24.04-arm
 
         timeout-minutes: 30
 
@@ -97,10 +97,10 @@ jobs:
                   path: |
                       ~/.android/sdk
                       ~/.android/avd
-                  key: ${{ runner.os }}-android-sdk-api33-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                  key: ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
                   restore-keys: |
-                      ${{ runner.os }}-android-sdk-api33-
-                      ${{ runner.os }}-android-sdk-
+                      ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-
+                      ${{ runner.os }}-${{ runner.arch }}-android-sdk-
 
             - name: Accept Android licenses
               if: steps.android-cache.outputs.cache-hit != 'true'
@@ -129,12 +129,20 @@ jobs:
                   echo "✅ Using cached Android SDK components"
                   sdkmanager --list_installed | head -20
 
+            - name: Enable KVM
+              run: |
+                  echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger --name-match=kvm
+                  # Add current user to kvm group
+                  sudo usermod -a -G kvm $USER
+
             - name: Create AVD
               run: |
                   if [ -d ~/.android/avd/test_avd.avd ]; then
                       echo "✅ Using cached AVD"
                   else
-                      echo "📱 Creating AVD..."
+                      echo "📱 Creating AVD (ARM64 with KVM acceleration)..."
                       echo "no" | avdmanager create avd \
                           --force \
                           --name test_avd \
@@ -145,7 +153,17 @@ jobs:
 
             - name: Start Android Emulator
               run: |
-                  echo "🚀 Starting Android Emulator..."
+                  echo "🚀 Starting Android Emulator (ARM64 with KVM acceleration)..."
+
+                  # Verify KVM is available
+                  if [ -e /dev/kvm ]; then
+                      echo "✅ KVM is available"
+                      ls -la /dev/kvm
+                  else
+                      echo "⚠️ KVM not available, emulator will be slow"
+                  fi
+
+                  # Start emulator with KVM
                   $ANDROID_HOME/emulator/emulator \
                       -avd test_avd \
                       -no-snapshot-save \
@@ -156,7 +174,7 @@ jobs:
                       -camera-back none \
                       -camera-front none \
                       -memory 2048 \
-                      -cores 2 \
+                      -accel on \
                       > /tmp/emulator.log 2>&1 &
 
                   echo $! > /tmp/emulator.pid
@@ -173,9 +191,9 @@ jobs:
                   adb wait-for-device
                   echo "📱 Device detected by ADB"
 
-                  # Wait for boot to complete
+                  # Wait for boot to complete (should be fast with KVM!)
                   boot_completed=false
-                  for i in {1..180}; do
+                  for i in {1..90}; do
                       if adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; then
                           boot_completed=true
                           echo "✅ Emulator booted successfully in $((i * 2)) seconds"
@@ -191,9 +209,9 @@ jobs:
                   kill $TAIL_PID 2>/dev/null || true
 
                   if [ "$boot_completed" = false ]; then
-                      echo "❌ Emulator failed to boot within 6 minutes"
-                      echo "📋 Last 50 lines of emulator log:"
-                      tail -50 /tmp/emulator.log
+                      echo "❌ Emulator failed to boot within 3 minutes"
+                      echo "📋 Last 100 lines of emulator log:"
+                      tail -100 /tmp/emulator.log
                       exit 1
                   fi
 
