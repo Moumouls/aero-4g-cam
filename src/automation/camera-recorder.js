@@ -54,12 +54,10 @@ async function recordCamera() {
     await loginButton.waitForDisplayed({ timeout: 30000 });
     await loginButton.click();
 
-    await driver.pause(10000);
 
-
-    /*const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
+    const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
     await cancelNotificationButton.waitForDisplayed({ timeout: 30000 });
-    await cancelNotificationButton.click();*/
+    await cancelNotificationButton.click();
 
 
     logger.info("Stopping screen recording...");
