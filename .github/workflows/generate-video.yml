@@ -129,32 +129,39 @@ jobs:
                       ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-v2-
                       ${{ runner.os }}-${{ runner.arch }}-android-sdk-
 
-            - name: Accept Android licenses
-              run: |
-                  yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
             - name: Install Android SDK components
               if: steps.android-cache.outputs.cache-hit != 'true'
               run: |
                   echo "📦 Installing Android SDK components (this may take 5-10 minutes on first run)..."
                   echo "⏰ Started at: $(date)"
 
-                  echo "Installing system image (largest download ~800MB)..."
-                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-33;google_apis;arm64-v8a"
-
+                  # Accept licenses and install components in one go
                   echo "Installing SDK platforms and tools..."
-                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-33"
-                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools"
-                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "emulator"
-                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.0"
+                  yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
+                      "platforms;android-33" \
+                      "platform-tools" \
+                      "emulator" \
+                      "build-tools;33.0.0" || true
+
+                  echo "Installing system image (largest download ~800MB)..."
+                  yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
+                      "system-images;android-33;google_apis;arm64-v8a" || true
 
                   echo "✅ SDK components installed at: $(date)"
 
-            - name: Verify SDK components (from cache)
-              if: steps.android-cache.outputs.cache-hit == 'true'
+            - name: Verify SDK installation
               run: |
-                  echo "✅ Using cached Android SDK components"
-                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list_installed | head -20
+                  if [ "${{ steps.android-cache.outputs.cache-hit }}" == "true" ]; then
+                      echo "✅ Using cached Android SDK components"
+                  fi
+
+                  echo "📋 Installed SDK packages:"
+                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list_installed
+
+                  echo ""
+                  echo "📋 Verifying critical components:"
+                  ls -la $ANDROID_HOME/platform-tools/adb || echo "⚠️ adb not found"
+                  ls -la $ANDROID_HOME/emulator/emulator || echo "⚠️ emulator not found"
 
             - name: Enable KVM
               run: |
