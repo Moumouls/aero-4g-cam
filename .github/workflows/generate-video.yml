@@ -171,19 +171,33 @@ jobs:
                   # Verify KVM is accessible
                   ls -la /dev/kvm
 
+            - name: Clean up old AVDs
+              run: |
+                  # Remove old ARM64 AVD if it exists (from previous cache)
+                  if [ -d ~/.android/avd/test_avd.avd ]; then
+                      echo "🧹 Removing old ARM64 AVD..."
+                      rm -rf ~/.android/avd/test_avd.avd
+                      rm -f ~/.android/avd/test_avd.ini
+                      echo "✅ Old AVD removed"
+                  fi
+
             - name: Create AVD
               run: |
-                  if [ -d ~/.android/avd/test_avd.avd ]; then
-                      echo "✅ Using cached AVD"
+                  AVD_NAME="test_avd_x86_64"
+                  if [ -d ~/.android/avd/${AVD_NAME}.avd ]; then
+                      echo "✅ Using cached AVD: ${AVD_NAME}"
                   else
                       echo "📱 Creating AVD (x86_64 with Google Play and ARM translation)..."
                       echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
                           --force \
-                          --name test_avd \
+                          --name ${AVD_NAME} \
                           --package "system-images;android-33;google_apis_playstore;x86_64" \
                           --device "pixel_5"
-                      echo "✅ AVD created"
+                      echo "✅ AVD created: ${AVD_NAME}"
                   fi
+
+                  # Export AVD name for next steps
+                  echo "AVD_NAME=${AVD_NAME}" >> $GITHUB_ENV
 
             - name: Start Android Emulator
               run: |
@@ -199,7 +213,7 @@ jobs:
 
                   # Start emulator with KVM
                   $ANDROID_HOME/emulator/emulator \
-                      -avd test_avd \
+                      -avd ${AVD_NAME} \
                       -no-snapshot-save \
                       -no-window \
                       -gpu swiftshader_indirect \
@@ -259,6 +273,41 @@ jobs:
                   $ANDROID_HOME/platform-tools/adb shell getprop ro.build.version.release
                   $ANDROID_HOME/platform-tools/adb shell getprop ro.product.model
                   $ANDROID_HOME/platform-tools/adb devices -l
+
+            - name: Install Appium UiAutomator2 driver
+              run: |
+                  echo "📱 Checking Appium drivers..."
+                  if yarn exec appium driver list --installed 2>/dev/null | grep -q "uiautomator2"; then
+                      echo "✅ UiAutomator2 driver already installed"
+                  else
+                      echo "📦 Installing UiAutomator2 driver..."
+                      yarn exec appium driver install uiautomator2
+                      echo "✅ UiAutomator2 driver installed"
+                  fi
+                  yarn exec appium driver list --installed
+
+            - name: Verify ARM translation support
+              run: |
+                  echo "🔍 Checking ARM ABI support on emulator..."
+
+                  ABI_LIST=$($ANDROID_HOME/platform-tools/adb shell getprop ro.product.cpu.abilist)
+                  echo "Supported ABIs: $ABI_LIST"
+
+                  if echo "$ABI_LIST" | grep -q "arm64-v8a"; then
+                      echo "✅ arm64-v8a is supported"
+                  else
+                      echo "❌ arm64-v8a is NOT supported - ARM APK installation may fail"
+                      exit 1
+                  fi
+
+                  NATIVE_BRIDGE=$($ANDROID_HOME/platform-tools/adb shell getprop ro.dalvik.vm.native.bridge)
+                  echo "Native bridge: $NATIVE_BRIDGE"
+
+                  if echo "$NATIVE_BRIDGE" | grep -q "libndk"; then
+                      echo "✅ ARM translation (libndk_translation) is active"
+                  else
+                      echo "⚠️ ARM translation may be using different bridge: $NATIVE_BRIDGE"
+                  fi
 
             - name: Start Appium server
               run: |
