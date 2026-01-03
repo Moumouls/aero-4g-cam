@@ -5,7 +5,7 @@ on:
 
 jobs:
     generate-video:
-        runs-on: ubuntu-24.04-arm
+        runs-on: ubuntu-latest
 
         timeout-minutes: 30
 
@@ -33,9 +33,9 @@ jobs:
                   path: |
                       ${{ steps.yarn-cache-dir-path.outputs.dir }}
                       node_modules
-                  key: ${{ runner.os }}-arm-yarn-${{ hashFiles('yarn.lock') }}
+                  key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
                   restore-keys: |
-                      ${{ runner.os }}-arm-yarn-
+                      ${{ runner.os }}-yarn-
 
             - name: Install dependencies
               run: yarn install --immutable
@@ -82,142 +82,93 @@ jobs:
                   CI=true
                   EOF
 
-            - name: Install Waydroid and ADB
+            - name: Enable KVM for Linux
               run: |
-                  echo "📦 Installing Waydroid and ADB..."
+                  echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+                  sudo udevadm control --reload-rules
+                  sudo udevadm trigger --name-match=kvm
+                  # Verify KVM is accessible
+                  ls -la /dev/kvm
 
-                  # Add Waydroid repository
-                  curl -s https://repo.waydro.id | sudo bash
-
-                  # Install Waydroid and ADB tools
-                  sudo apt update
-                  sudo apt install -y waydroid android-tools-adb
-
-                  # Verify installation
-                  waydroid --version
-                  adb --version
-
-                  echo "✅ Waydroid and ADB installed"
-
-            - name: Initialize and start Waydroid
+            - name: Update Android Emulator to latest version
               run: |
-                  echo "🚀 Initializing Waydroid..."
+                  echo "📦 Updating Android Emulator to latest version..."
+                  ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --update
+                  ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager "emulator"
+                  ${ANDROID_SDK_ROOT}/emulator/emulator -version
 
-                  # Initialize with GApps (Google Play Services)
-                  sudo waydroid init -s GAPPS -f
+            - name: Run Android Emulator with ARM translation
+              uses: reactivecircus/android-emulator-runner@v2
+              with:
+                  api-level: 35
+                  target: google_apis
+                  arch: x86_64
+                  profile: pixel_5
+                  ram-size: 4096M
+                  disk-size: 8192M
+                  heap-size: 512M
+                  force-avd-creation: false
+                  emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+                  disable-animations: true
+                  emulator-boot-timeout: 900
+                  script: |
+                      echo "📱 Emulator is ready!"
 
-                  # Start Waydroid container service
-                  sudo systemctl start waydroid-container
+                      # Show device info
+                      echo "📱 Device info:"
+                      adb shell getprop ro.build.version.release
+                      adb shell getprop ro.product.model
+                      adb devices -l
 
-                  # Wait for container to be ready
-                  sleep 10
+                      # Verify ARM translation support
+                      echo "🔍 Checking ARM ABI support on emulator..."
+                      adb shell getprop ro.product.cpu.abilist | tee /tmp/abi_list.txt || echo "unknown" > /tmp/abi_list.txt
+                      echo "Supported ABIs: $(cat /tmp/abi_list.txt)"
+                      if grep -q "arm64-v8a" /tmp/abi_list.txt; then echo "✅ arm64-v8a is supported"; else echo "⚠️ arm64-v8a is NOT supported - ARM APK installation may fail"; fi
 
-                  # Start Waydroid session in background
-                  waydroid session start &
-                  WAYDROID_PID=$!
-                  echo $WAYDROID_PID > /tmp/waydroid.pid
+                      adb shell getprop ro.dalvik.vm.native.bridge | tee /tmp/native_bridge.txt || echo "none" > /tmp/native_bridge.txt
+                      echo "Native bridge: $(cat /tmp/native_bridge.txt)"
+                      if grep -q "libndk" /tmp/native_bridge.txt; then echo "✅ ARM translation (libndk_translation) is active"; else echo "⚠️ ARM translation bridge: $(cat /tmp/native_bridge.txt)"; fi
 
-                  # Wait for Android to boot completely
-                  echo "⏳ Waiting for Android to boot..."
-                  for i in {1..60}; do
-                      if waydroid status | grep -q "RUNNING"; then
-                          echo "✅ Waydroid is running"
-                          break
+                      # Start Appium server in background
+                      echo "📱 Starting Appium server..."
+                      yarn exec appium --allow-cors > /tmp/appium.log 2>&1 & echo $! > /tmp/appium.pid
+                      echo "Appium PID: $(cat /tmp/appium.pid)"
+
+                      # Wait for Appium to be ready
+                      echo "⏳ Waiting for Appium to start..."
+                      for i in {1..30}; do
+                          if curl -s http://localhost:4723/status > /dev/null 2>&1; then
+                              echo "✅ Appium is ready"
+                              break
+                          fi
+                          if [ $i -eq 30 ]; then
+                              echo "❌ Appium failed to start"
+                              cat /tmp/appium.log
+                              kill $(cat /tmp/appium.pid) 2>/dev/null || true
+                              exit 1
+                          fi
+                          sleep 1
+                      done
+
+                      # Install APKs and run automation
+                      echo "📦 Installing application..."
+                      chmod +x scripts/install-app.sh
+                      ./scripts/install-app.sh
+
+                      # Run the camera recorder automation
+                      echo "🎥 Running camera recorder automation..."
+                      VERBOSE=1 node src/automation/camera-recorder.js
+
+                      # Cleanup Appium
+                      echo "🧹 Stopping Appium..."
+                      kill $(cat /tmp/appium.pid 2>/dev/null) 2>/dev/null || true
+                      pkill -f appium || true
+
+                      # Show logs
+                      if [ -f /tmp/appium.log ]; then
+                          echo "📋 Appium logs (last 50 lines):"
+                          tail -50 /tmp/appium.log
                       fi
-                      if [ $i -eq 60 ]; then
-                          echo "❌ Waydroid failed to start"
-                          waydroid status
-                          waydroid logcat
-                          exit 1
-                      fi
-                      sleep 2
-                  done
 
-                  # Start UI in background (headless mode)
-                  waydroid show-full-ui &
-                  sleep 5
-
-                  # Connect ADB to Waydroid
-                  echo "🔌 Connecting ADB to Waydroid..."
-                  WAYDROID_IP=$(waydroid shell ip addr show eth0 | grep 'inet ' | awk '{print $2}' | cut -d/ -f1)
-                  echo "Waydroid IP: $WAYDROID_IP"
-                  adb connect $WAYDROID_IP:5555
-
-                  # Wait for device to be ready
-                  adb wait-for-device
-                  echo "✅ ADB connected to Waydroid"
-
-                  # Display device information
-                  echo "📱 Device info:"
-                  adb devices -l
-                  adb shell getprop ro.build.version.release
-                  adb shell getprop ro.product.model
-                  adb shell getprop ro.product.cpu.abilist
-
-                  echo "✅ Waydroid is ready for automation"
-
-            - name: Run automation with Appium
-              run: |
-                  echo "📱 Starting automation..."
-
-                  # Verify ADB connection
-                  echo "📱 ADB devices:"
-                  adb devices -l
-
-                  # Start Appium server in background
-                  echo "📱 Starting Appium server..."
-                  yarn exec appium --allow-cors > /tmp/appium.log 2>&1 & echo $! > /tmp/appium.pid
-                  echo "Appium PID: $(cat /tmp/appium.pid)"
-
-                  # Wait for Appium to be ready
-                  echo "⏳ Waiting for Appium to start..."
-                  for i in {1..30}; do
-                      if curl -s http://localhost:4723/status > /dev/null 2>&1; then
-                          echo "✅ Appium is ready"
-                          break
-                      fi
-                      if [ $i -eq 30 ]; then
-                          echo "❌ Appium failed to start"
-                          cat /tmp/appium.log
-                          kill $(cat /tmp/appium.pid) 2>/dev/null || true
-                          exit 1
-                      fi
-                      sleep 1
-                  done
-
-                  # Install APKs
-                  echo "📦 Installing application..."
-                  chmod +x scripts/install-app.sh
-                  ./scripts/install-app.sh
-
-                  # Run the camera recorder automation
-                  echo "🎥 Running camera recorder automation..."
-                  VERBOSE=1 node src/automation/camera-recorder.js
-
-                  echo "✅ Automation completed successfully"
-
-            - name: Cleanup
-              if: always()
-              run: |
-                  echo "🧹 Cleaning up..."
-
-                  # Stop Appium
-                  if [ -f /tmp/appium.pid ]; then
-                      kill $(cat /tmp/appium.pid) 2>/dev/null || true
-                  fi
-                  pkill -f appium || true
-
-                  # Show Appium logs
-                  if [ -f /tmp/appium.log ]; then
-                      echo "📋 Appium logs (last 50 lines):"
-                      tail -50 /tmp/appium.log
-                  fi
-
-                  # Stop Waydroid
-                  if [ -f /tmp/waydroid.pid ]; then
-                      kill $(cat /tmp/waydroid.pid) 2>/dev/null || true
-                  fi
-                  waydroid session stop || true
-                  sudo systemctl stop waydroid-container || true
-
-                  echo "✅ Cleanup completed"
+                      echo "✅ Automation completed successfully"
