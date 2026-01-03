@@ -55,15 +55,17 @@ async function recordCamera() {
     await loginButton.click();
 
 
-    /*const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
+    const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
     await cancelNotificationButton.waitForDisplayed({ timeout: 30000 });
-    await cancelNotificationButton.click();*/
+    await cancelNotificationButton.click();
 
 
     logger.info("Stopping screen recording...");
     const videoBase64 = await driver.stopRecordingScreen();
 
     const timestamp = new Date().toISOString();
+
+    //  await driver.debug();
 
     if (USE_FS) {
         // Save the video to a file
