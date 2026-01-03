@@ -87,24 +87,51 @@ jobs:
                   distribution: "temurin"
                   java-version: "17"
 
-            - name: Setup Android SDK
-              uses: android-actions/setup-android@v3
+            - name: Setup Android SDK manually
+              run: |
+                  echo "📦 Installing Android SDK for ARM64 Linux..."
+
+                  # Set Android SDK path
+                  export ANDROID_HOME=$HOME/android-sdk
+                  mkdir -p $ANDROID_HOME
+
+                  # Download command line tools for Linux
+                  cd $HOME
+                  wget -q https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -O cmdline-tools.zip
+                  unzip -q cmdline-tools.zip
+
+                  # Set up proper directory structure
+                  mkdir -p $ANDROID_HOME/cmdline-tools
+                  mv cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+                  rm cmdline-tools.zip
+
+                  # Set up PATH
+                  echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+                  echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+                  echo "$ANDROID_HOME/emulator" >> $GITHUB_PATH
+                  echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+                  echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+
+                  # Verify installation
+                  ls -la $ANDROID_HOME/cmdline-tools/latest/bin/
+
+                  echo "✅ Android SDK tools installed"
 
             - name: Cache Android SDK
               uses: actions/cache@v4
               id: android-cache
               with:
                   path: |
-                      ~/.android/sdk
+                      ~/android-sdk
                       ~/.android/avd
-                  key: ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                  key: ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-v2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
                   restore-keys: |
-                      ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-
+                      ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-v2-
                       ${{ runner.os }}-${{ runner.arch }}-android-sdk-
 
             - name: Accept Android licenses
-              if: steps.android-cache.outputs.cache-hit != 'true'
-              run: yes | sdkmanager --licenses || true
+              run: |
+                  yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
             - name: Install Android SDK components
               if: steps.android-cache.outputs.cache-hit != 'true'
@@ -113,13 +140,13 @@ jobs:
                   echo "⏰ Started at: $(date)"
 
                   echo "Installing system image (largest download ~800MB)..."
-                  sdkmanager --install "system-images;android-33;google_apis;arm64-v8a"
+                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "system-images;android-33;google_apis;arm64-v8a"
 
                   echo "Installing SDK platforms and tools..."
-                  sdkmanager --install "platforms;android-33"
-                  sdkmanager --install "platform-tools"
-                  sdkmanager --install "emulator"
-                  sdkmanager --install "build-tools;33.0.0"
+                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platforms;android-33"
+                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools"
+                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "emulator"
+                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "build-tools;33.0.0"
 
                   echo "✅ SDK components installed at: $(date)"
 
@@ -127,15 +154,15 @@ jobs:
               if: steps.android-cache.outputs.cache-hit == 'true'
               run: |
                   echo "✅ Using cached Android SDK components"
-                  sdkmanager --list_installed | head -20
+                  $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list_installed | head -20
 
             - name: Enable KVM
               run: |
                   echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
                   sudo udevadm control --reload-rules
                   sudo udevadm trigger --name-match=kvm
-                  # Add current user to kvm group
-                  sudo usermod -a -G kvm $USER
+                  # Verify KVM is accessible
+                  ls -la /dev/kvm
 
             - name: Create AVD
               run: |
@@ -143,7 +170,7 @@ jobs:
                       echo "✅ Using cached AVD"
                   else
                       echo "📱 Creating AVD (ARM64 with KVM acceleration)..."
-                      echo "no" | avdmanager create avd \
+                      echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
                           --force \
                           --name test_avd \
                           --package "system-images;android-33;google_apis;arm64-v8a" \
@@ -188,13 +215,13 @@ jobs:
                   tail -f /tmp/emulator.log &
                   TAIL_PID=$!
 
-                  adb wait-for-device
+                  $ANDROID_HOME/platform-tools/adb wait-for-device
                   echo "📱 Device detected by ADB"
 
                   # Wait for boot to complete (should be fast with KVM!)
                   boot_completed=false
                   for i in {1..90}; do
-                      if adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; then
+                      if $ANDROID_HOME/platform-tools/adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; then
                           boot_completed=true
                           echo "✅ Emulator booted successfully in $((i * 2)) seconds"
                           break
@@ -216,15 +243,15 @@ jobs:
                   fi
 
                   # Disable animations
-                  adb shell settings put global window_animation_scale 0
-                  adb shell settings put global transition_animation_scale 0
-                  adb shell settings put global animator_duration_scale 0
+                  $ANDROID_HOME/platform-tools/adb shell settings put global window_animation_scale 0
+                  $ANDROID_HOME/platform-tools/adb shell settings put global transition_animation_scale 0
+                  $ANDROID_HOME/platform-tools/adb shell settings put global animator_duration_scale 0
 
                   # Show device info
                   echo "📱 Device info:"
-                  adb shell getprop ro.build.version.release
-                  adb shell getprop ro.product.model
-                  adb devices -l
+                  $ANDROID_HOME/platform-tools/adb shell getprop ro.build.version.release
+                  $ANDROID_HOME/platform-tools/adb shell getprop ro.product.model
+                  $ANDROID_HOME/platform-tools/adb devices -l
 
             - name: Start Appium server
               run: |
@@ -271,7 +298,7 @@ jobs:
                   if [ -f /tmp/emulator.pid ]; then
                       kill $(cat /tmp/emulator.pid) 2>/dev/null || true
                   fi
-                  adb emu kill 2>/dev/null || true
+                  $ANDROID_HOME/platform-tools/adb emu kill 2>/dev/null || true
 
                   # Show logs if they exist
                   if [ -f /tmp/appium.log ]; then
