@@ -201,7 +201,13 @@ jobs:
 
             - name: Start Android Emulator
               run: |
+                  AVD_NAME="test_avd_x86_64"
                   echo "🚀 Starting Android Emulator (x86_64 with ARM translation and KVM acceleration)..."
+                  echo "Using AVD: ${AVD_NAME}"
+
+                  # List available AVDs for debugging
+                  echo "📋 Available AVDs:"
+                  $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager list avd
 
                   # Verify KVM is available
                   if [ -e /dev/kvm ]; then
@@ -209,6 +215,17 @@ jobs:
                       ls -la /dev/kvm
                   else
                       echo "⚠️ KVM not available, emulator will be slow"
+                  fi
+
+                  # Verify AVD exists
+                  if [ ! -d ~/.android/avd/${AVD_NAME}.avd ]; then
+                      echo "❌ AVD not found: ${AVD_NAME}"
+                      echo "Creating AVD now..."
+                      echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
+                          --force \
+                          --name ${AVD_NAME} \
+                          --package "system-images;android-33;google_apis_playstore;x86_64" \
+                          --device "pixel_5"
                   fi
 
                   # Start emulator with KVM
