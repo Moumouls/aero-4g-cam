@@ -87,20 +87,50 @@ jobs:
                   distribution: "temurin"
                   java-version: "17"
 
-            - name: Setup Android SDK
-              uses: android-actions/setup-android@v3
-
             - name: Cache Android SDK
               uses: actions/cache@v4
               id: android-cache
               with:
                   path: |
-                      ~/.android/sdk
+                      ~/android-sdk
                       ~/.android/avd
-                  key: ${{ runner.os }}-android-sdk-api33-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                  key: ${{ runner.os }}-android-sdk-api33-arm64-v2
                   restore-keys: |
                       ${{ runner.os }}-android-sdk-api33-
-                      ${{ runner.os }}-android-sdk-
+
+            - name: Setup Android SDK manually
+              if: steps.android-cache.outputs.cache-hit != 'true'
+              run: |
+                  echo "📦 Setting up Android SDK..."
+
+                  # Download and install Android command-line tools
+                  # Using the official URL from developer.android.com
+                  SDK_TOOLS_URL="https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip"
+                  mkdir -p ~/android-sdk/cmdline-tools
+                  cd ~/android-sdk/cmdline-tools
+
+                  echo "Downloading Android SDK command-line tools..."
+                  curl -fSL -o cmdline-tools.zip $SDK_TOOLS_URL
+
+                  echo "Extracting command-line tools..."
+                  unzip -q cmdline-tools.zip
+                  mv cmdline-tools latest
+
+                  echo "Verifying installation..."
+                  ls -la latest/bin/
+
+                  # Set environment variables
+                  export ANDROID_HOME=~/android-sdk
+                  export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH
+
+                  echo "✅ Command-line tools installed"
+
+            - name: Set Android environment variables
+              run: |
+                  echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+                  echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+                  echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+                  echo "$HOME/android-sdk/emulator" >> $GITHUB_PATH
 
             - name: Accept Android licenses
               if: steps.android-cache.outputs.cache-hit != 'true'
@@ -121,7 +151,12 @@ jobs:
               if: steps.android-cache.outputs.cache-hit == 'true'
               run: |
                   echo "✅ Using cached Android SDK components"
-                  sdkmanager --list_installed | head -20
+                  if command -v sdkmanager &> /dev/null; then
+                      sdkmanager --list_installed | head -20
+                  else
+                      echo "⚠️ sdkmanager not found in PATH, listing directories:"
+                      ls -la ~/android-sdk/ || echo "SDK directory not found"
+                  fi
 
             - name: Create AVD
               run: |
