@@ -109,13 +109,19 @@ jobs:
             - name: Install Android SDK components
               if: steps.android-cache.outputs.cache-hit != 'true'
               run: |
-                  echo "📦 Installing Android SDK components..."
+                  echo "📦 Installing Android SDK components (this may take 5-10 minutes on first run)..."
+                  echo "⏰ Started at: $(date)"
+
+                  echo "Installing system image (largest download ~800MB)..."
                   sdkmanager --install "system-images;android-33;google_apis;arm64-v8a"
+
+                  echo "Installing SDK platforms and tools..."
                   sdkmanager --install "platforms;android-33"
                   sdkmanager --install "platform-tools"
                   sdkmanager --install "emulator"
                   sdkmanager --install "build-tools;33.0.0"
-                  echo "✅ SDK components installed"
+
+                  echo "✅ SDK components installed at: $(date)"
 
             - name: Verify SDK components (from cache)
               if: steps.android-cache.outputs.cache-hit == 'true'
@@ -149,6 +155,8 @@ jobs:
                       -no-boot-anim \
                       -camera-back none \
                       -camera-front none \
+                      -memory 2048 \
+                      -cores 2 \
                       > /tmp/emulator.log 2>&1 &
 
                   echo $! > /tmp/emulator.pid
@@ -157,23 +165,35 @@ jobs:
             - name: Wait for Emulator to boot
               run: |
                   echo "⏳ Waiting for emulator to boot..."
+
+                  # Show emulator log in background for debugging
+                  tail -f /tmp/emulator.log &
+                  TAIL_PID=$!
+
                   adb wait-for-device
+                  echo "📱 Device detected by ADB"
 
                   # Wait for boot to complete
                   boot_completed=false
-                  for i in {1..120}; do
-                      if adb shell getprop sys.boot_completed | grep -q "1"; then
+                  for i in {1..180}; do
+                      if adb shell getprop sys.boot_completed 2>/dev/null | grep -q "1"; then
                           boot_completed=true
-                          echo "✅ Emulator booted successfully"
+                          echo "✅ Emulator booted successfully in $((i * 2)) seconds"
                           break
                       fi
-                      echo "Waiting for boot... ($i/120)"
+                      if [ $((i % 15)) -eq 0 ]; then
+                          echo "⏳ Still waiting for boot... ($((i * 2))s elapsed)"
+                      fi
                       sleep 2
                   done
 
+                  # Stop tailing the log
+                  kill $TAIL_PID 2>/dev/null || true
+
                   if [ "$boot_completed" = false ]; then
-                      echo "❌ Emulator failed to boot"
-                      cat /tmp/emulator.log
+                      echo "❌ Emulator failed to boot within 6 minutes"
+                      echo "📋 Last 50 lines of emulator log:"
+                      tail -50 /tmp/emulator.log
                       exit 1
                   fi
 
