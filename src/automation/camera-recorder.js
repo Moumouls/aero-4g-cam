@@ -54,6 +54,8 @@ async function recordCamera() {
     await loginButton.waitForDisplayed({ timeout: 30000 });
     await loginButton.click();
 
+    await driver.pause(10000);
+
 
     /*const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
     await cancelNotificationButton.waitForDisplayed({ timeout: 30000 });
@@ -64,6 +66,8 @@ async function recordCamera() {
     const videoBase64 = await driver.stopRecordingScreen();
 
     const timestamp = new Date().toISOString();
+
+    await driver.debug();
 
     if (USE_FS) {
         // Save the video to a file
