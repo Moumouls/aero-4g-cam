@@ -88,18 +88,6 @@ jobs:
                   # Verify KVM is accessible
                   ls -la /dev/kvm
 
-            - name: Install Appium UiAutomator2 driver
-              run: |
-                  echo "📱 Checking Appium drivers..."
-                  if yarn exec appium driver list --installed 2>/dev/null | grep -q "uiautomator2"; then
-                      echo "✅ UiAutomator2 driver already installed"
-                  else
-                      echo "📦 Installing UiAutomator2 driver..."
-                      yarn exec appium driver install uiautomator2
-                      echo "✅ UiAutomator2 driver installed"
-                  fi
-                  yarn exec appium driver list --installed
-
             - name: Run tests on Android Emulator
               uses: reactivecircus/android-emulator-runner@v2
               with:
