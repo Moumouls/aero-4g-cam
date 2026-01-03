@@ -67,7 +67,7 @@ async function recordCamera() {
 
     const timestamp = new Date().toISOString();
 
-    await driver.debug();
+    //  await driver.debug();
 
     if (USE_FS) {
         // Save the video to a file
