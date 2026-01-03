@@ -5,7 +5,7 @@ on:
 
 jobs:
     generate-video:
-        runs-on: ubuntu-24.04-arm
+        runs-on: ubuntu-latest
 
         timeout-minutes: 30
 
@@ -89,7 +89,7 @@ jobs:
 
             - name: Setup Android SDK manually
               run: |
-                  echo "📦 Installing Android SDK for ARM64 Linux..."
+                  echo "📦 Installing Android SDK for x86_64 Linux..."
 
                   # Set Android SDK path
                   export ANDROID_HOME=$HOME/android-sdk
@@ -124,9 +124,9 @@ jobs:
                   path: |
                       ~/android-sdk
                       ~/.android/avd
-                  key: ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-v2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                  key: ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-x86_64-playstore-v1-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
                   restore-keys: |
-                      ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-arm64-v2-
+                      ${{ runner.os }}-${{ runner.arch }}-android-sdk-api33-x86_64-playstore-v1-
                       ${{ runner.os }}-${{ runner.arch }}-android-sdk-
 
             - name: Install Android SDK components
@@ -143,9 +143,9 @@ jobs:
                       "emulator" \
                       "build-tools;33.0.0" || true
 
-                  echo "Installing system image (largest download ~800MB)..."
+                  echo "Installing system image with Play Store and ARM translation (largest download ~800MB)..."
                   yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install \
-                      "system-images;android-33;google_apis;arm64-v8a" || true
+                      "system-images;android-33;google_apis_playstore;x86_64" || true
 
                   echo "✅ SDK components installed at: $(date)"
 
@@ -176,18 +176,18 @@ jobs:
                   if [ -d ~/.android/avd/test_avd.avd ]; then
                       echo "✅ Using cached AVD"
                   else
-                      echo "📱 Creating AVD (ARM64 with KVM acceleration)..."
+                      echo "📱 Creating AVD (x86_64 with Google Play and ARM translation)..."
                       echo "no" | $ANDROID_HOME/cmdline-tools/latest/bin/avdmanager create avd \
                           --force \
                           --name test_avd \
-                          --package "system-images;android-33;google_apis;arm64-v8a" \
+                          --package "system-images;android-33;google_apis_playstore;x86_64" \
                           --device "pixel_5"
                       echo "✅ AVD created"
                   fi
 
             - name: Start Android Emulator
               run: |
-                  echo "🚀 Starting Android Emulator (ARM64 with KVM acceleration)..."
+                  echo "🚀 Starting Android Emulator (x86_64 with ARM translation and KVM acceleration)..."
 
                   # Verify KVM is available
                   if [ -e /dev/kvm ]; then
