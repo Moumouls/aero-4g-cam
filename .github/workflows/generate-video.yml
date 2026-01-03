@@ -81,6 +81,113 @@ jobs:
                   CI=true
                   EOF
 
+            - name: Setup Java
+              uses: actions/setup-java@v4
+              with:
+                  distribution: "temurin"
+                  java-version: "17"
+
+            - name: Setup Android SDK
+              uses: android-actions/setup-android@v3
+
+            - name: Cache Android SDK
+              uses: actions/cache@v4
+              id: android-cache
+              with:
+                  path: |
+                      ~/.android/sdk
+                      ~/.android/avd
+                  key: ${{ runner.os }}-android-sdk-api33-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+                  restore-keys: |
+                      ${{ runner.os }}-android-sdk-api33-
+                      ${{ runner.os }}-android-sdk-
+
+            - name: Accept Android licenses
+              if: steps.android-cache.outputs.cache-hit != 'true'
+              run: yes | sdkmanager --licenses || true
+
+            - name: Install Android SDK components
+              if: steps.android-cache.outputs.cache-hit != 'true'
+              run: |
+                  echo "📦 Installing Android SDK components..."
+                  sdkmanager --install "system-images;android-33;google_apis;arm64-v8a"
+                  sdkmanager --install "platforms;android-33"
+                  sdkmanager --install "platform-tools"
+                  sdkmanager --install "emulator"
+                  sdkmanager --install "build-tools;33.0.0"
+                  echo "✅ SDK components installed"
+
+            - name: Verify SDK components (from cache)
+              if: steps.android-cache.outputs.cache-hit == 'true'
+              run: |
+                  echo "✅ Using cached Android SDK components"
+                  sdkmanager --list_installed | head -20
+
+            - name: Create AVD
+              run: |
+                  if [ -d ~/.android/avd/test_avd.avd ]; then
+                      echo "✅ Using cached AVD"
+                  else
+                      echo "📱 Creating AVD..."
+                      echo "no" | avdmanager create avd \
+                          --force \
+                          --name test_avd \
+                          --package "system-images;android-33;google_apis;arm64-v8a" \
+                          --device "pixel_5"
+                      echo "✅ AVD created"
+                  fi
+
+            - name: Start Android Emulator
+              run: |
+                  echo "🚀 Starting Android Emulator..."
+                  $ANDROID_HOME/emulator/emulator \
+                      -avd test_avd \
+                      -no-snapshot-save \
+                      -no-window \
+                      -gpu swiftshader_indirect \
+                      -noaudio \
+                      -no-boot-anim \
+                      -camera-back none \
+                      -camera-front none \
+                      > /tmp/emulator.log 2>&1 &
+
+                  echo $! > /tmp/emulator.pid
+                  echo "✅ Emulator started with PID $(cat /tmp/emulator.pid)"
+
+            - name: Wait for Emulator to boot
+              run: |
+                  echo "⏳ Waiting for emulator to boot..."
+                  adb wait-for-device
+
+                  # Wait for boot to complete
+                  boot_completed=false
+                  for i in {1..120}; do
+                      if adb shell getprop sys.boot_completed | grep -q "1"; then
+                          boot_completed=true
+                          echo "✅ Emulator booted successfully"
+                          break
+                      fi
+                      echo "Waiting for boot... ($i/120)"
+                      sleep 2
+                  done
+
+                  if [ "$boot_completed" = false ]; then
+                      echo "❌ Emulator failed to boot"
+                      cat /tmp/emulator.log
+                      exit 1
+                  fi
+
+                  # Disable animations
+                  adb shell settings put global window_animation_scale 0
+                  adb shell settings put global transition_animation_scale 0
+                  adb shell settings put global animator_duration_scale 0
+
+                  # Show device info
+                  echo "📱 Device info:"
+                  adb shell getprop ro.build.version.release
+                  adb shell getprop ro.product.model
+                  adb devices -l
+
             - name: Start Appium server
               run: |
                   echo "📱 Starting Appium server..."
@@ -102,25 +209,16 @@ jobs:
                       sleep 1
                   done
 
-            - name: Run Emulator and Automation
-              uses: reactivecircus/android-emulator-runner@v2
-              with:
-                  api-level: 33
-                  target: google_apis
-                  arch: arm64-v8a
-                  profile: pixel_5
-                  disable-animations: true
-                  force-avd-creation: false
-                  emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-                  script: |
-                      # Make script executable
-                      chmod +x scripts/install-app.sh
+            - name: Run Automation
+              run: |
+                  # Make script executable
+                  chmod +x scripts/install-app.sh
 
-                      # Install APKs and prepare device
-                      ./scripts/install-app.sh
+                  # Install APKs and prepare device
+                  ./scripts/install-app.sh
 
-                      # Run the camera recorder automation
-                      VERBOSE=1 node src/automation/camera-recorder.js
+                  # Run the camera recorder automation
+                  VERBOSE=1 node src/automation/camera-recorder.js
 
             - name: Cleanup
               if: always()
@@ -131,8 +229,19 @@ jobs:
                   fi
                   pkill -f appium || true
 
+                  # Kill emulator
+                  if [ -f /tmp/emulator.pid ]; then
+                      kill $(cat /tmp/emulator.pid) 2>/dev/null || true
+                  fi
+                  adb emu kill 2>/dev/null || true
+
                   # Show logs if they exist
                   if [ -f /tmp/appium.log ]; then
                       echo "📋 Appium logs:"
                       tail -100 /tmp/appium.log
+                  fi
+
+                  if [ -f /tmp/emulator.log ]; then
+                      echo "📋 Emulator logs:"
+                      tail -100 /tmp/emulator.log
                   fi
