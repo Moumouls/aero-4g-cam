@@ -99,7 +99,7 @@ jobs:
                   disk-size: 4096M
                   heap-size: 512M
                   force-avd-creation: true
-                  emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+                  emulator-options: -no-snapshot-save -no-snapshot-load -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
                   disable-animations: true
                   emulator-boot-timeout: 600
                   script: |
@@ -113,23 +113,29 @@ jobs:
 
                       # Verify ARM translation support
                       echo "🔍 Checking ARM ABI support on emulator..."
-                      ABI_LIST=$(adb shell getprop ro.product.cpu.abilist)
+                      ABI_LIST=$(adb shell getprop ro.product.cpu.abilist || echo "unknown")
                       echo "Supported ABIs: $ABI_LIST"
 
-                      if echo "$ABI_LIST" | grep -q "arm64-v8a"; then
-                          echo "✅ arm64-v8a is supported"
-                      else
-                          echo "⚠️ arm64-v8a is NOT supported - ARM APK installation may fail"
-                      fi
+                      case "$ABI_LIST" in
+                          *arm64-v8a*)
+                              echo "✅ arm64-v8a is supported"
+                              ;;
+                          *)
+                              echo "⚠️ arm64-v8a is NOT supported - ARM APK installation may fail"
+                              ;;
+                      esac
 
-                      NATIVE_BRIDGE=$(adb shell getprop ro.dalvik.vm.native.bridge)
+                      NATIVE_BRIDGE=$(adb shell getprop ro.dalvik.vm.native.bridge || echo "none")
                       echo "Native bridge: $NATIVE_BRIDGE"
 
-                      if echo "$NATIVE_BRIDGE" | grep -q "libndk"; then
-                          echo "✅ ARM translation (libndk_translation) is active"
-                      else
-                          echo "⚠️ ARM translation bridge: $NATIVE_BRIDGE"
-                      fi
+                      case "$NATIVE_BRIDGE" in
+                          *libndk*)
+                              echo "✅ ARM translation (libndk_translation) is active"
+                              ;;
+                          *)
+                              echo "⚠️ ARM translation bridge: $NATIVE_BRIDGE"
+                              ;;
+                      esac
 
                       # Start Appium server in background
                       echo "📱 Starting Appium server..."
