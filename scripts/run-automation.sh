@@ -91,7 +91,7 @@ echo "✅ Device ready for testing"
 
 # Run the camera recorder automation
 echo "🎥 Running camera recorder automation..."
-VERBOSE=1 node src/automation/camera-recorder.js
+VERBOSE=1 SKIP_TUTO=1 node src/automation/camera-recorder.js
 
 # Cleanup Appium
 echo "🧹 Stopping Appium..."
