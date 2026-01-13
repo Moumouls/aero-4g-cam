@@ -18,9 +18,10 @@ const IDS = {
     REMOVE_CONTROL_LAYOUT: 'id=cn.ubia.ubox:id/monitorLayout',
 }
 
-const USE_FS = false
+const VERBOSE = !!process.env.VERBOSE
 
-const SKIP_TUTO = process.env.SKIP_TUTO === "true" || process.env.SKIP_TUTO === "1";
+const USE_FS = true
+
 
 async function recordCamera() {
     const logger = new Logger();
@@ -59,14 +60,14 @@ async function recordCamera() {
     await cancelNotificationButton.waitForDisplayed({ timeout: 30000 });
     await cancelNotificationButton.click();
 
-    if (!SKIP_TUTO) {
-        const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
-        await tutoHomeButton.waitForDisplayed({ timeout: 30000 });
-        await tutoHomeButton.click();
-        await tutoHomeButton.click();
-        await tutoHomeButton.click();
-        await tutoHomeButton.click();
-    }
+    if (VERBOSE) await driver.saveScreenshot('home.png');
+
+    const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
+    await tutoHomeButton.waitForDisplayed({ timeout: 30000 });
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
 
 
     const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
@@ -74,19 +75,17 @@ async function recordCamera() {
     await cameraThumbnail.click();
 
 
-    if (!SKIP_TUTO) {
-        const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
-        await tutoCameraButton.waitForDisplayed({ timeout: 30000 });
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-    }
+    const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
+    await tutoCameraButton.waitForDisplayed({ timeout: 30000 });
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
 
     const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
     await fullscreenButton.waitForDisplayed({ timeout: 30000 });

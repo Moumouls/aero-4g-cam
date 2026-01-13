@@ -1,105 +1,113 @@
 name: Generate Video
 
 on:
-    workflow_dispatch:
-    pull_request:
-        types: [opened, synchronize]
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
-    generate-video:
-        runs-on: ubuntu-latest
+  generate-video:
+    runs-on: ubuntu-latest
 
-        timeout-minutes: 30
+    timeout-minutes: 30
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
-              with:
-                  lfs: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "24.9"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.9"
 
-            - name: Enable Yarn
-              run: corepack enable
+      - name: Enable Yarn
+        run: corepack enable
 
-            - name: Get Yarn cache directory
-              id: yarn-cache-dir-path
-              run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
 
-            - name: Cache Yarn dependencies
-              uses: actions/cache@v4
-              with:
-                  path: |
-                      ${{ steps.yarn-cache-dir-path.outputs.dir }}
-                      node_modules
-                  key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-                  restore-keys: |
-                      ${{ runner.os }}-yarn-
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.yarn-cache-dir-path.outputs.dir }}
+            node_modules
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
 
-            - name: Install dependencies
-              run: yarn install --immutable
+      - name: Install dependencies
+        run: yarn install --immutable
 
-            - name: Extract XAPK to split APKs
-              run: |
-                  # Extract XAPK (it's a ZIP file)
-                  if [ -f "UBox.xapk" ]; then
-                    echo "Extracting UBox.xapk..."
-                    mkdir -p split-apks obb
-                    unzip -q UBox.xapk -d extracted_xapk
-                    
-                    # Move APK files to split-apks directory
-                    find extracted_xapk -name "*.apk" -exec mv {} split-apks/ \;
-                    
-                    # Move OBB files if they exist
-                    if find extracted_xapk -name "*.obb" -type f | grep -q .; then
-                      echo "OBB files found, extracting..."
-                      find extracted_xapk -name "*.obb" -exec mv {} obb/ \;
-                    fi
-                    
-                    # Cleanup
-                    rm -rf extracted_xapk
-                    echo "✅ XAPK extraction complete"
-                  else
-                    echo "⚠️ UBox.xapk not found, assuming split-apks already exist"
-                  fi
+      - name: Extract XAPK to split APKs
+        run: |
+          # Extract XAPK (it's a ZIP file)
+          if [ -f "UBox.xapk" ]; then
+            echo "Extracting UBox.xapk..."
+            mkdir -p split-apks obb
+            unzip -q UBox.xapk -d extracted_xapk
+            
+            # Move APK files to split-apks directory
+            find extracted_xapk -name "*.apk" -exec mv {} split-apks/ \;
+            
+            # Move OBB files if they exist
+            if find extracted_xapk -name "*.obb" -type f | grep -q .; then
+              echo "OBB files found, extracting..."
+              find extracted_xapk -name "*.obb" -exec mv {} obb/ \;
+            fi
+            
+            # Cleanup
+            rm -rf extracted_xapk
+            echo "✅ XAPK extraction complete"
+          else
+            echo "⚠️ UBox.xapk not found, assuming split-apks already exist"
+          fi
 
-            - name: Create .env file from secrets
-              run: |
-                  cat > .env << EOF
-                  # Cloudflare R2 Configuration
-                  R2_ACCOUNT_ID=${{ secrets.R2_ACCOUNT_ID }}
-                  R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}
-                  R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
-                  R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}
-                  R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}
+      - name: Create .env file from secrets
+        run: |
+          cat > .env << EOF
+          # Cloudflare R2 Configuration
+          R2_ACCOUNT_ID=${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID=${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY=${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME=${{ secrets.R2_BUCKET_NAME }}
+          R2_ENDPOINT=${{ secrets.R2_ENDPOINT }}
 
-                  # UBox Credentials
-                  UBOX_EMAIL=${{ secrets.UBOX_EMAIL }}
-                  UBOX_PASSWORD=${{ secrets.UBOX_PASSWORD }}
+          # UBox Credentials
+          UBOX_EMAIL=${{ secrets.UBOX_EMAIL }}
+          UBOX_PASSWORD=${{ secrets.UBOX_PASSWORD }}
 
-                  # CI Environment
-                  CI=true
-                  EOF
+          # CI Environment
+          CI=true
+          EOF
 
-            - name: Enable KVM for Linux
-              run: |
-                  echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-                  sudo udevadm control --reload-rules
-                  sudo udevadm trigger --name-match=kvm
-                  # Verify KVM is accessible
-                  ls -la /dev/kvm
+      - name: Enable KVM for Linux
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          # Verify KVM is accessible
+          ls -la /dev/kvm
 
-            - name: Run Android Emulator with ARM translation
-              uses: reactivecircus/android-emulator-runner@v2
-              with:
-                  api-level: 35
-                  target: google_apis
-                  arch: x86_64
-                  profile: pixel_5
-                  force-avd-creation: false
-                  emulator-options: -no-snapshot-load -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
-                  disable-animations: true
-                  script: bash scripts/run-automation.sh
+      - name: Run Android Emulator with ARM translation
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-snapshot-load -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
+          disable-animations: true
+          script: bash scripts/run-automation.sh
+
+      - name: Upload home screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: home-screenshot
+          path: home.png
+          if-no-files-found: ignore
