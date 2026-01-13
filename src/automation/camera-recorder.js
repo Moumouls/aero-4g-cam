@@ -12,6 +12,10 @@ const IDS = {
     PASSWORD_INPUT: 'id=cn.ubia.ubox:id/login_pwd_edit',
     LOGIN_BUTTON: 'id=cn.ubia.ubox:id/login_btn',
     CANCEL_NOTIFICATION_BUTTON: 'id=cn.ubia.ubox:id/comfirm_del_device_cancel',
+    TUTO_CONTAINER: 'id=cn.ubia.ubox:id/fl_container',
+    CAMERA_THUMBNAIL: 'id=cn.ubia.ubox:id/cameraListItemThumbnail',
+    FULLSCREEN_BUTTON: 'id=cn.ubia.ubox:id/full_btn',
+    REMOVE_CONTROL_LAYOUT: 'id=cn.ubia.ubox:id/monitorLayout',
 }
 
 const USE_FS = false
@@ -44,12 +48,6 @@ async function recordCamera() {
     await passwordInput.waitForDisplayed({ timeout: 30000 });
     await passwordInput.setValue(process.env.UBOX_PASSWORD, { mask: true });
 
-    await driver.startRecordingScreen({
-        videoSize: '1280x720',
-        timeLimit: '1800', // 30 minutes max
-        bitRate: '1000000' // 1 Mbps
-    });
-
     const loginButton = await driver.$(IDS.LOGIN_BUTTON);
     await loginButton.waitForDisplayed({ timeout: 30000 });
     await loginButton.click();
@@ -59,13 +57,53 @@ async function recordCamera() {
     await cancelNotificationButton.waitForDisplayed({ timeout: 30000 });
     await cancelNotificationButton.click();
 
+    const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
+    await tutoHomeButton.waitForDisplayed({ timeout: 30000 });
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
 
-    logger.info("Stopping screen recording...");
+
+    const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
+    await cameraThumbnail.waitForDisplayed({ timeout: 30000 });
+    await cameraThumbnail.click();
+
+    const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
+    await tutoCameraButton.waitForDisplayed({ timeout: 30000 });
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+
+    const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
+    await fullscreenButton.waitForDisplayed({ timeout: 30000 });
+    await fullscreenButton.click();
+
+    const removeControlLayout = await driver.$(IDS.REMOVE_CONTROL_LAYOUT);
+    await removeControlLayout.waitForDisplayed({ timeout: 30000 });
+    await removeControlLayout.click();
+
+    await driver.startRecordingScreen({
+
+        videoSize: '1280x720',
+        timeLimit: '1800', // 30 minutes max
+        bitRate: '1000000' // 1 Mbps
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 10000));
+
     const videoBase64 = await driver.stopRecordingScreen();
 
-    const timestamp = new Date().toISOString();
+    // quit the app
+    await driver.execute('mobile: terminateApp', { appId: 'cn.ubia.ubox' })
 
-    //  await driver.debug();
+    const timestamp = new Date().toISOString();
 
     if (USE_FS) {
         // Save the video to a file
