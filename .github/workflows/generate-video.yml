@@ -104,10 +104,10 @@ jobs:
           disable-animations: true
           script: bash scripts/run-automation.sh
 
-      - name: Upload home screenshot
+      - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: home-screenshot
-          path: home.png
+          name: screenshots
+          path: screenshots
           if-no-files-found: ignore
