@@ -70,13 +70,11 @@ async function recordCamera() {
     await tutoHomeButton.click();
     await tutoHomeButton.click();
 
-    await sleep(5000);
-
     const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
     await cameraThumbnail.waitForDisplayed({ timeout: 30000 });
     await cameraThumbnail.click();
 
-    await sleep(5000);
+    await sleep(10000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_home.png');
 
@@ -93,15 +91,11 @@ async function recordCamera() {
     await tutoCameraButton.click();
     await tutoCameraButton.click();
 
-    await sleep(2000);
-
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_fullscreen.png');
 
     const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
     await fullscreenButton.waitForDisplayed({ timeout: 30000 });
     await fullscreenButton.click();
-
-    await sleep(2000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_remove_control_layout.png');
 
