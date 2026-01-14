@@ -19,7 +19,6 @@ const IDS = {
 }
 
 const VERBOSE = !!process.env.VERBOSE
-const SKIP_TUTO = !!process.env.SKIP_TUTO
 const USE_FS = true
 
 
@@ -62,14 +61,12 @@ async function recordCamera() {
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/home.png');
 
-    if (!SKIP_TUTO) {
-        const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
-        await tutoHomeButton.waitForDisplayed({ timeout: 30000 });
-        await tutoHomeButton.click();
-        await tutoHomeButton.click();
-        await tutoHomeButton.click();
-        await tutoHomeButton.click();
-    }
+    const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
+    await tutoHomeButton.waitForDisplayed({ timeout: 30000 });
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
+    await tutoHomeButton.click();
 
 
     const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
@@ -79,19 +76,17 @@ async function recordCamera() {
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_home.png');
 
 
-    if (!SKIP_TUTO) {
-        const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
-        await tutoCameraButton.waitForDisplayed({ timeout: 30000 });
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-        await tutoCameraButton.click();
-    }
+    const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
+    await tutoCameraButton.waitForDisplayed({ timeout: 30000 });
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
+    await tutoCameraButton.click();
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_fullscreen.png');
 
