@@ -104,14 +104,13 @@ async function recordCamera() {
     await removeControlLayout.click();
 
     await driver.startRecordingScreen({
-
         videoSize: '1280x720',
         timeLimit: '1800', // 30 minutes max
         bitRate: '1000000' // 1 Mbps
     });
 
     // wait 10 seconds before stopping the recording
-    await sleep(15000);
+    await sleep(10000);
 
     const videoBase64 = await driver.stopRecordingScreen();
 
