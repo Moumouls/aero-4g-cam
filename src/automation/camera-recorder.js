@@ -73,6 +73,7 @@ async function recordCamera() {
     await cameraThumbnail.waitForDisplayed({ timeout: 30000 });
     await cameraThumbnail.click();
 
+    await new Promise(resolve => setTimeout(resolve, 10000));
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_home.png');
 
 
