@@ -86,17 +86,18 @@ async function recordCamera() {
 
         const countrySelectButton = await driver.$(IDS.COUNTRY_SELECT_BUTTON);
         await countrySelectButton.waitForExist({ timeout: 10000 });
-        await countrySelectButton.click();
+        // Wait for the country text to match the expected value
+        await driver.waitUntil(
+            async () => {
+                const text = await countrySelectButton.getAttribute('text');
+                return ['FRANCE', 'UNITED STATES'].includes(text);
+            },
+            {
+                timeout: 10000,
+                timeoutMsg: `Expected country text to be "FRANCE" or "UNITED STATES" but it didn't match within timeout`
+            }
+        );
 
-        const countrySearchInput = await driver.$(IDS.COUNTRY_SEARCH_INPUT);
-        await countrySearchInput.waitForExist({ timeout: 10000 });
-        await countrySearchInput.setValue('France');
-
-        await sleep(1000);
-
-        const countrySelector = await driver.$(IDS.COUNTRY_SELECTOR);
-        await countrySelector.waitForExist({ timeout: 10000 });
-        await countrySelector.click();
 
         const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
         await firstLoginButton.waitForExist({ timeout: 10000 });
