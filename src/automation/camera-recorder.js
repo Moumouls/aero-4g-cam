@@ -153,8 +153,7 @@ async function recordCamera() {
 
     } catch (error) {
         await driver.saveScreenshot('./screenshots/error.png');
-    } finally {
-        process.exit(1);
+        throw error;
     }
 
     // await driver.debug();
