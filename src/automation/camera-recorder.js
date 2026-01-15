@@ -91,16 +91,12 @@ async function recordCamera() {
     await cameraThumbnail.click();
     await sleep(1000);
 
-    const waitStream = await driver.$(IDS.LIGHT_BUTTON);
-    await waitStream.waitForDisplayed({ timeout: 10000 });
-
-    await sleep(1000);
-
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_home.png');
 
 
     const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
-    await tutoCameraButton.waitForDisplayed({ timeout: 10000 });
+    // Important to wait here for the stream to be ready
+    await tutoCameraButton.waitForDisplayed({ timeout: 60000 });
     await tutoCameraButton.click();
     await tutoCameraButton.click();
     await tutoCameraButton.click();
