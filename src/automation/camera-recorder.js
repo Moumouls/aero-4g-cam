@@ -76,12 +76,11 @@ async function recordCamera() {
     await tutoHomeButton.click();
     await tutoHomeButton.click();
 
-    await sleep(1000);
+    await sleep(5000);
 
     const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
     await cameraThumbnail.waitForDisplayed({ timeout: 10000 });
     await cameraThumbnail.click();
-    await sleep(1000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_home.png');
 
