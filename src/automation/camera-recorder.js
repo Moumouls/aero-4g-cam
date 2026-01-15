@@ -57,18 +57,23 @@ async function recordCamera() {
     await emailInput.waitForDisplayed({ timeout: 10000 });
     await emailInput.setValue(process.env.UBOX_EMAIL, { mask: true });
 
+    await sleep(1000);
+
     const passwordInput = await driver.$(IDS.PASSWORD_INPUT);
     await passwordInput.waitForDisplayed({ timeout: 10000 });
     await passwordInput.setValue(process.env.UBOX_PASSWORD, { mask: true });
+    await sleep(1000);
 
     const loginButton = await driver.$(IDS.LOGIN_BUTTON);
     await loginButton.waitForDisplayed({ timeout: 10000 });
     await loginButton.click();
+    await sleep(1000);
 
 
     const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
     await cancelNotificationButton.waitForDisplayed({ timeout: 10000 });
     await cancelNotificationButton.click();
+    await sleep(1000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/home.png');
 
@@ -79,9 +84,12 @@ async function recordCamera() {
     await tutoHomeButton.click();
     await tutoHomeButton.click();
 
+    await sleep(1000);
+
     const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
     await cameraThumbnail.waitForDisplayed({ timeout: 10000 });
     await cameraThumbnail.click();
+    await sleep(1000);
 
     const waitStream = await driver.$(IDS.LIGHT_BUTTON);
     await waitStream.waitForDisplayed({ timeout: 10000 });
@@ -103,17 +111,21 @@ async function recordCamera() {
     await tutoCameraButton.click();
     await tutoCameraButton.click();
 
+    await sleep(1000);
+
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_fullscreen.png');
 
     const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
     await fullscreenButton.waitForDisplayed({ timeout: 10000 });
     await fullscreenButton.click();
+    await sleep(1000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_remove_control_layout.png');
 
     const removeControlLayout = await driver.$(IDS.REMOVE_CONTROL_LAYOUT);
     await removeControlLayout.waitForDisplayed({ timeout: 10000 });
     await removeControlLayout.click();
+    await sleep(1000);
 
     await driver.startRecordingScreen({
         videoSize: '1280x720',
