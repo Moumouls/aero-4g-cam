@@ -72,9 +72,6 @@ async function waitForCameraStream(driver, logger) {
 
     await skipTuto(driver);
 
-    await driver.debug();
-
-
     for (let i = 0; i < 2; i++) {
         await sleep(100);
         await driver
