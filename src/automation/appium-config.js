@@ -9,11 +9,9 @@ const capabilities = {
     "appium:appPackage": "cn.ubia.ubox",
     "appium:appWaitActivity": "*", // Wait for any activity to avoid timeout
     "appium:autoGrantPermissions": true,
-    "appium:noReset": false,
     "appium:ensureWebviewsHavePages": true,
     "appium:nativeWebScreenshot": true,
-    "appium:newCommandTimeout": 300,
-    // "appium:orientation": "LANDSCAPE", // TODO: Re-enable later - currently causing rotation lock error
+    "appium:newCommandTimeout": 10000,
     "appium:uiautomator2ServerInstallTimeout": 60000, // Increased timeout for driver installation
 };
 
