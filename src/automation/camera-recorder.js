@@ -35,9 +35,9 @@ async function recordCamera() {
     }
     validator.printConfig();
 
-    try {
+    const driver = await createDriver();
 
-        const driver = await createDriver();
+    try {
 
         const element = await driver.$(IDS.AGREEMENT_BUTTON);
         await element.waitForExist({ timeout: 30000 });
@@ -153,7 +153,7 @@ async function recordCamera() {
 
     } catch (error) {
         await driver.saveScreenshot('./screenshots/error.png');
-        throw error;
+        process.exit(1);
     }
 
     // await driver.debug();
