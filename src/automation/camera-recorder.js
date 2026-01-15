@@ -35,7 +35,11 @@ async function recordCamera() {
     }
     validator.printConfig();
 
+    await sleep(5000);
+
     const driver = await createDriver();
+
+    await sleep(5000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/AGREEMENT_BUTTON.png');
 
