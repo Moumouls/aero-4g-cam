@@ -27,6 +27,16 @@ const USE_FS = false
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+
+const skipTuto = async (driver) => {
+    await driver
+        .action('pointer', { parameters: { pointerType: 'touch' } })
+        .move({ x: 855, y: 200 })
+        .down({ button: 0 })
+        .pause(100)
+        .up({ button: 0 })
+        .perform();
+}
 /**
  * Waits for the camera stream to be ready and clicks through the tutorial.
  * This function is used in retry logic for camera connection.
@@ -39,11 +49,20 @@ async function waitForCameraStream(driver, logger) {
     // Important to wait here for the stream to be ready
     await tutoCameraButton.waitForExist({ timeout: 30000 });
 
-    // Click through tutorial
-    for (let i = 0; i < 9; i++) {
-        await tutoCameraButton.click();
+    await skipTuto(driver);
+
+
+    for (let i = 0; i < 2; i++) {
         await sleep(100);
+        await driver
+            .action('pointer', { parameters: { pointerType: 'touch' } })
+            .move({ x: 88, y: 327 })
+            .down({ button: 0 })
+            .pause(100)
+            .up({ button: 0 })
+            .perform();
     }
+
 }
 
 
@@ -79,8 +98,6 @@ async function recordCamera() {
         await countrySelector.waitForExist({ timeout: 10000 });
         await countrySelector.click();
 
-        await sleep(1000);
-
         const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
         await firstLoginButton.waitForExist({ timeout: 10000 });
         await firstLoginButton.click();
@@ -100,19 +117,11 @@ async function recordCamera() {
         const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
         await cancelNotificationButton.waitForExist({ timeout: 30000 });
         await cancelNotificationButton.click();
-        await driver.debug();
+
         const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
         await tutoHomeButton.waitForExist({ timeout: 10000 });
-        await sleep(100);
-        await tutoHomeButton.click();
-        await sleep(100);
-        await tutoHomeButton.click();
-        await sleep(100);
-        await tutoHomeButton.click();
-        await sleep(100);
-        await tutoHomeButton.click();
-
-        await sleep(5000);
+        // click to specific location using W3C Actions API
+        await skipTuto(driver);
 
         // Click on camera thumbnail to open camera view
         const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
@@ -161,7 +170,7 @@ async function recordCamera() {
         });
 
         // wait 10 seconds before stopping the recording
-        await sleep(10000);
+        await sleep(5000);
 
         const videoBase64 = await driver.stopRecordingScreen();
 
