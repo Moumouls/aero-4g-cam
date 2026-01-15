@@ -46,10 +46,33 @@ const skipTuto = async (driver) => {
 async function waitForCameraStream(driver, logger) {
     const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
 
-    // Important to wait here for the stream to be ready
-    await tutoCameraButton.waitForExist({ timeout: 30000 });
+    try {
+        // Important to wait here for the stream to be ready
+        await tutoCameraButton.waitForExist({ timeout: 30000 });
+
+    } catch (error) {
+        // Counter last tuto frame button
+        if (!driver.isExisting("//android.widget.ImageView")) {
+            // We are not stuck in the tuto, so we can throw an error
+            throw new Error("Camera stream not ready");
+        }
+
+        for (let i = 0; i < 2; i++) {
+            await sleep(100);
+            await driver
+                .action('pointer', { parameters: { pointerType: 'touch' } })
+                .move({ x: 88, y: 327 })
+                .down({ button: 0 })
+                .pause(100)
+                .up({ button: 0 })
+                .perform();
+        }
+        return
+    }
 
     await skipTuto(driver);
+
+    await driver.debug();
 
 
     for (let i = 0; i < 2; i++) {
