@@ -37,43 +37,35 @@ async function recordCamera() {
 
     const driver = await createDriver();
 
-    await sleep(1000);
-
-
     const element = await driver.$(IDS.AGREEMENT_BUTTON);
-    await element.waitForDisplayed({ timeout: 10000 });
+    await element.waitForDisplayed({ timeout: 30000 });
     await element.click();
 
-    await sleep(3000);
+    await sleep(5000);
 
     const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
     await firstLoginButton.waitForDisplayed({ timeout: 10000 });
     await firstLoginButton.click();
 
-    await sleep(1000);
-
-
     const emailInput = await driver.$(IDS.EMAIL_INPUT);
     await emailInput.waitForDisplayed({ timeout: 10000 });
     await emailInput.setValue(process.env.UBOX_EMAIL, { mask: true });
 
-    await sleep(1000);
+    await sleep(3000);
 
     const passwordInput = await driver.$(IDS.PASSWORD_INPUT);
     await passwordInput.waitForDisplayed({ timeout: 10000 });
     await passwordInput.setValue(process.env.UBOX_PASSWORD, { mask: true });
-    await sleep(1000);
+    await sleep(3000);
 
     const loginButton = await driver.$(IDS.LOGIN_BUTTON);
     await loginButton.waitForDisplayed({ timeout: 10000 });
     await loginButton.click();
-    await sleep(1000);
 
 
     const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
-    await cancelNotificationButton.waitForDisplayed({ timeout: 10000 });
+    await cancelNotificationButton.waitForDisplayed({ timeout: 30000 });
     await cancelNotificationButton.click();
-    await sleep(1000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/home.png');
 
