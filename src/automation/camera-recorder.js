@@ -70,12 +70,9 @@ async function recordCamera() {
         await emailInput.waitForExist({ timeout: 10000 });
         await emailInput.setValue(process.env.UBOX_EMAIL, { mask: true });
 
-        await sleep(3000);
-
         const passwordInput = await driver.$(IDS.PASSWORD_INPUT);
         await passwordInput.waitForExist({ timeout: 10000 });
         await passwordInput.setValue(process.env.UBOX_PASSWORD, { mask: true });
-        await sleep(3000);
 
         const loginButton = await driver.$(IDS.LOGIN_BUTTON);
         await loginButton.waitForExist({ timeout: 10000 });
@@ -87,9 +84,13 @@ async function recordCamera() {
 
         const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
         await tutoHomeButton.waitForExist({ timeout: 10000 });
+        await sleep(100);
         await tutoHomeButton.click();
+        await sleep(100);
         await tutoHomeButton.click();
+        await sleep(100);
         await tutoHomeButton.click();
+        await sleep(100);
         await tutoHomeButton.click();
 
         await sleep(5000);
@@ -102,16 +103,22 @@ async function recordCamera() {
         // Important to wait here for the stream to be ready
         await tutoCameraButton.waitForExist({ timeout: 60000 });
         await tutoCameraButton.click();
+        await sleep(100);
         await tutoCameraButton.click();
+        await sleep(100);
         await tutoCameraButton.click();
+        await sleep(100);
         await tutoCameraButton.click();
+        await sleep(100);
         await tutoCameraButton.click();
+        await sleep(100);
         await tutoCameraButton.click();
+        await sleep(100);
         await tutoCameraButton.click();
+        await sleep(100);
         await tutoCameraButton.click();
+        await sleep(100);
         await tutoCameraButton.click();
-
-        await sleep(1000);
 
         const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
         await fullscreenButton.waitForExist({ timeout: 10000 });
