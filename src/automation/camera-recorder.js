@@ -40,43 +40,43 @@ async function recordCamera() {
     if (VERBOSE) await driver.saveScreenshot('./screenshots/AGREEMENT_BUTTON.png');
 
     const element = await driver.$(IDS.AGREEMENT_BUTTON);
-    await element.waitForDisplayed({ timeout: 30000 });
+    await element.waitToExist({ timeout: 30000 });
     await element.click();
 
     await sleep(5000);
     if (VERBOSE) await driver.saveScreenshot('./screenshots/PRE_LOGIN_BUTTON.png');
 
     const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
-    await firstLoginButton.waitForDisplayed({ timeout: 10000 });
+    await firstLoginButton.waitToExist({ timeout: 10000 });
     await firstLoginButton.click();
 
     const emailInput = await driver.$(IDS.EMAIL_INPUT);
-    await emailInput.waitForDisplayed({ timeout: 10000 });
+    await emailInput.waitToExist({ timeout: 10000 });
     await emailInput.setValue(process.env.UBOX_EMAIL, { mask: true });
 
     await sleep(3000);
 
     const passwordInput = await driver.$(IDS.PASSWORD_INPUT);
-    await passwordInput.waitForDisplayed({ timeout: 10000 });
+    await passwordInput.waitToExist({ timeout: 10000 });
     await passwordInput.setValue(process.env.UBOX_PASSWORD, { mask: true });
     await sleep(3000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/LOGIN_BUTTON.png');
 
     const loginButton = await driver.$(IDS.LOGIN_BUTTON);
-    await loginButton.waitForDisplayed({ timeout: 10000 });
+    await loginButton.waitToExist({ timeout: 10000 });
     await loginButton.click();
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/CANCEL_NOTIFICATION_BUTTON.png');
 
     const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
-    await cancelNotificationButton.waitForDisplayed({ timeout: 30000 });
+    await cancelNotificationButton.waitToExist({ timeout: 30000 });
     await cancelNotificationButton.click();
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/TUTO_CONTAINER_HOME.png');
 
     const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
-    await tutoHomeButton.waitForDisplayed({ timeout: 10000 });
+    await tutoHomeButton.waitToExist({ timeout: 10000 });
     await tutoHomeButton.click();
     await tutoHomeButton.click();
     await tutoHomeButton.click();
@@ -87,7 +87,7 @@ async function recordCamera() {
     if (VERBOSE) await driver.saveScreenshot('./screenshots/CAMERA_THUMBNAIL.png');
 
     const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
-    await cameraThumbnail.waitForDisplayed({ timeout: 10000 });
+    await cameraThumbnail.waitToExist({ timeout: 10000 });
     await cameraThumbnail.click();
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/TUTO_CONTAINER_CAMERA.png');
@@ -95,7 +95,7 @@ async function recordCamera() {
 
     const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
     // Important to wait here for the stream to be ready
-    await tutoCameraButton.waitForDisplayed({ timeout: 60000 });
+    await tutoCameraButton.waitToExist({ timeout: 60000 });
     await tutoCameraButton.click();
     await tutoCameraButton.click();
     await tutoCameraButton.click();
@@ -111,14 +111,14 @@ async function recordCamera() {
     if (VERBOSE) await driver.saveScreenshot('./screenshots/FULLSCREEN_BUTTON.png');
 
     const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
-    await fullscreenButton.waitForDisplayed({ timeout: 10000 });
+    await fullscreenButton.waitToExist({ timeout: 10000 });
     await fullscreenButton.click();
     await sleep(1000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/REMOVE_CONTROL_LAYOUT.png');
 
     const removeControlLayout = await driver.$(IDS.REMOVE_CONTROL_LAYOUT);
-    await removeControlLayout.waitForDisplayed({ timeout: 10000 });
+    await removeControlLayout.waitToExist({ timeout: 10000 });
     await removeControlLayout.click();
     await sleep(1000);
 
