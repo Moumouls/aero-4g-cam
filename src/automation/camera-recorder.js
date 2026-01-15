@@ -7,6 +7,9 @@ const { EnvironmentValidator } = require("../utils/env-validator");
 
 const IDS = {
     AGREEMENT_BUTTON: 'id=cn.ubia.ubox:id/ok_btn',
+    COUNTRY_SELECT_BUTTON: 'id=cn.ubia.ubox:id/login_country_tv',
+    COUNTRY_SEARCH_INPUT: 'id=cn.ubia.ubox:id/et_search',
+    COUNTRY_SELECTOR: "id=cn.ubia.ubox:id/tv_name",
     PRE_LOGIN_BUTTON: 'id=cn.ubia.ubox:id/login_tv',
     EMAIL_INPUT: 'id=cn.ubia.ubox:id/login_name_edit',
     PASSWORD_INPUT: 'id=cn.ubia.ubox:id/login_pwd_edit',
@@ -43,7 +46,21 @@ async function recordCamera() {
         await element.waitForExist({ timeout: 30000 });
         await element.click();
 
-        await sleep(5000);
+        const countrySelectButton = await driver.$(IDS.COUNTRY_SELECT_BUTTON);
+        await countrySelectButton.waitForExist({ timeout: 10000 });
+        await countrySelectButton.click();
+
+        const countrySearchInput = await driver.$(IDS.COUNTRY_SEARCH_INPUT);
+        await countrySearchInput.waitForExist({ timeout: 10000 });
+        await countrySearchInput.setValue('France');
+
+        await sleep(1000);
+
+        const countrySelector = await driver.$(IDS.COUNTRY_SELECTOR);
+        await countrySelector.waitForExist({ timeout: 10000 });
+        await countrySelector.click();
+
+        await sleep(1000);
 
         const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
         await firstLoginButton.waitForExist({ timeout: 10000 });
@@ -152,6 +169,7 @@ async function recordCamera() {
         }
 
     } catch (error) {
+        console.error(error);
         await driver.saveScreenshot('./screenshots/error.png');
         process.exit(1);
     }

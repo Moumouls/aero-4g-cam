@@ -96,7 +96,7 @@ jobs:
           api-level: 35
           target: google_apis
           arch: x86_64
-          profile: pixel_5
+          profile: pixel_2
           ram-size: 4096
           cores: 4
           script: bash scripts/run-automation.sh
