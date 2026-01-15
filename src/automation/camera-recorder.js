@@ -35,136 +35,126 @@ async function recordCamera() {
     }
     validator.printConfig();
 
-    const driver = await createDriver();
+    try {
 
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/AGREEMENT_BUTTON.png');
+        const driver = await createDriver();
 
-    const element = await driver.$(IDS.AGREEMENT_BUTTON);
-    await element.waitForExist({ timeout: 30000 });
-    await element.click();
+        const element = await driver.$(IDS.AGREEMENT_BUTTON);
+        await element.waitForExist({ timeout: 30000 });
+        await element.click();
 
-    await sleep(5000);
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/PRE_LOGIN_BUTTON.png');
+        await sleep(5000);
 
-    const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
-    await firstLoginButton.waitForExist({ timeout: 10000 });
-    await firstLoginButton.click();
+        const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
+        await firstLoginButton.waitForExist({ timeout: 10000 });
+        await firstLoginButton.click();
 
-    const emailInput = await driver.$(IDS.EMAIL_INPUT);
-    await emailInput.waitForExist({ timeout: 10000 });
-    await emailInput.setValue(process.env.UBOX_EMAIL, { mask: true });
+        const emailInput = await driver.$(IDS.EMAIL_INPUT);
+        await emailInput.waitForExist({ timeout: 10000 });
+        await emailInput.setValue(process.env.UBOX_EMAIL, { mask: true });
 
-    await sleep(3000);
+        await sleep(3000);
 
-    const passwordInput = await driver.$(IDS.PASSWORD_INPUT);
-    await passwordInput.waitForExist({ timeout: 10000 });
-    await passwordInput.setValue(process.env.UBOX_PASSWORD, { mask: true });
-    await sleep(3000);
+        const passwordInput = await driver.$(IDS.PASSWORD_INPUT);
+        await passwordInput.waitForExist({ timeout: 10000 });
+        await passwordInput.setValue(process.env.UBOX_PASSWORD, { mask: true });
+        await sleep(3000);
 
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/LOGIN_BUTTON.png');
+        const loginButton = await driver.$(IDS.LOGIN_BUTTON);
+        await loginButton.waitForExist({ timeout: 10000 });
+        await loginButton.click();
 
-    const loginButton = await driver.$(IDS.LOGIN_BUTTON);
-    await loginButton.waitForExist({ timeout: 10000 });
-    await loginButton.click();
+        const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
+        await cancelNotificationButton.waitForExist({ timeout: 30000 });
+        await cancelNotificationButton.click();
 
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/CANCEL_NOTIFICATION_BUTTON.png');
+        const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
+        await tutoHomeButton.waitForExist({ timeout: 10000 });
+        await tutoHomeButton.click();
+        await tutoHomeButton.click();
+        await tutoHomeButton.click();
+        await tutoHomeButton.click();
 
-    const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
-    await cancelNotificationButton.waitForExist({ timeout: 30000 });
-    await cancelNotificationButton.click();
+        await sleep(5000);
 
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/TUTO_CONTAINER_HOME.png');
+        const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
+        await cameraThumbnail.waitForExist({ timeout: 10000 });
+        await cameraThumbnail.click();
 
-    const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
-    await tutoHomeButton.waitForExist({ timeout: 10000 });
-    await tutoHomeButton.click();
-    await tutoHomeButton.click();
-    await tutoHomeButton.click();
-    await tutoHomeButton.click();
+        const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
+        // Important to wait here for the stream to be ready
+        await tutoCameraButton.waitForExist({ timeout: 60000 });
+        await tutoCameraButton.click();
+        await tutoCameraButton.click();
+        await tutoCameraButton.click();
+        await tutoCameraButton.click();
+        await tutoCameraButton.click();
+        await tutoCameraButton.click();
+        await tutoCameraButton.click();
+        await tutoCameraButton.click();
+        await tutoCameraButton.click();
 
-    await sleep(5000);
+        await sleep(1000);
 
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/CAMERA_THUMBNAIL.png');
+        const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
+        await fullscreenButton.waitForExist({ timeout: 10000 });
+        await fullscreenButton.click();
+        await sleep(1000);
 
-    const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
-    await cameraThumbnail.waitForExist({ timeout: 10000 });
-    await cameraThumbnail.click();
+        const removeControlLayout = await driver.$(IDS.REMOVE_CONTROL_LAYOUT);
+        await removeControlLayout.waitForExist({ timeout: 10000 });
+        await removeControlLayout.click();
+        await sleep(1000);
 
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/TUTO_CONTAINER_CAMERA.png');
+        await driver.startRecordingScreen({
+            videoSize: '1280x720',
+            timeLimit: '1800', // 30 minutes max
+            bitRate: '1000000' // 1 Mbps
+        });
 
+        // wait 10 seconds before stopping the recording
+        await sleep(10000);
 
-    const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
-    // Important to wait here for the stream to be ready
-    await tutoCameraButton.waitForExist({ timeout: 60000 });
-    await tutoCameraButton.click();
-    await tutoCameraButton.click();
-    await tutoCameraButton.click();
-    await tutoCameraButton.click();
-    await tutoCameraButton.click();
-    await tutoCameraButton.click();
-    await tutoCameraButton.click();
-    await tutoCameraButton.click();
-    await tutoCameraButton.click();
+        const videoBase64 = await driver.stopRecordingScreen();
 
-    await sleep(1000);
+        // quit the app
+        await driver.execute('mobile: terminateApp', { appId: 'cn.ubia.ubox' })
 
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/FULLSCREEN_BUTTON.png');
+        const timestamp = new Date().toISOString();
 
-    const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
-    await fullscreenButton.waitForExist({ timeout: 10000 });
-    await fullscreenButton.click();
-    await sleep(1000);
+        if (USE_FS) {
+            // Save the video to a file
+            const fs = require('fs');
+            const path = require('path');
+            const videoPath = path.join(__dirname, '..', '..', 'recordings', `recording.mp4`);
 
-    if (VERBOSE) await driver.saveScreenshot('./screenshots/REMOVE_CONTROL_LAYOUT.png');
+            // Create recordings directory if it doesn't exist
+            const recordingsDir = path.join(__dirname, '..', '..', 'recordings');
+            if (!fs.existsSync(recordingsDir)) {
+                fs.mkdirSync(recordingsDir, { recursive: true });
+            }
 
-    const removeControlLayout = await driver.$(IDS.REMOVE_CONTROL_LAYOUT);
-    await removeControlLayout.waitForExist({ timeout: 10000 });
-    await removeControlLayout.click();
-    await sleep(1000);
+            // Write video file
+            fs.writeFileSync(videoPath, videoBase64, 'base64');
+        } else {
 
-    await driver.startRecordingScreen({
-        videoSize: '1280x720',
-        timeLimit: '1800', // 30 minutes max
-        bitRate: '1000000' // 1 Mbps
-    });
+            // Upload video
+            await uploadToR2(videoBase64, `terrain.mp4`, logger);
 
-    // wait 10 seconds before stopping the recording
-    await sleep(10000);
+            // Upload metadata JSON
+            const metadata = {
+                timestamp: timestamp,
+                videoKey: "terrain.mp4"
+            };
+            await uploadJsonToR2(metadata, `terrain.json`, logger);
 
-    const videoBase64 = await driver.stopRecordingScreen();
-
-    // quit the app
-    await driver.execute('mobile: terminateApp', { appId: 'cn.ubia.ubox' })
-
-    const timestamp = new Date().toISOString();
-
-    if (USE_FS) {
-        // Save the video to a file
-        const fs = require('fs');
-        const path = require('path');
-        const videoPath = path.join(__dirname, '..', '..', 'recordings', `recording.mp4`);
-
-        // Create recordings directory if it doesn't exist
-        const recordingsDir = path.join(__dirname, '..', '..', 'recordings');
-        if (!fs.existsSync(recordingsDir)) {
-            fs.mkdirSync(recordingsDir, { recursive: true });
+            logger.info(`✅ Video recorded at: ${timestamp}`);
         }
 
-        // Write video file
-        fs.writeFileSync(videoPath, videoBase64, 'base64');
-    } else {
-
-        // Upload video
-        await uploadToR2(videoBase64, `terrain.mp4`, logger);
-
-        // Upload metadata JSON
-        const metadata = {
-            timestamp: timestamp,
-            videoKey: "terrain.mp4"
-        };
-        await uploadJsonToR2(metadata, `terrain.json`, logger);
-
-        logger.info(`✅ Video recorded at: ${timestamp}`);
+    } catch (error) {
+        await driver.saveScreenshot('./screenshots/error.png');
+    } finally {
+        process.exit(1);
     }
 
     // await driver.debug();
