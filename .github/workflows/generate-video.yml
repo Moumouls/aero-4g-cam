@@ -97,7 +97,7 @@ jobs:
           path: |
             ~/.android/avd/*
             ~/.android/adb*
-          key: avd-35
+          key: ${{ hashFiles('.github/workflows/generate-video.yml') }}
 
       - name: create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
@@ -106,9 +106,8 @@ jobs:
           api-level: 35
           target: google_apis
           arch: x86_64
+          emulator-options: -no-window -noaudio -no-boot-anim -camera-back none
           profile: pixel_5
-          force-avd-creation: false
-          disable-animations: false
           script: echo "Generated AVD snapshot for caching."
 
       - name: Run Android Emulator with ARM translation
@@ -119,8 +118,7 @@ jobs:
           arch: x86_64
           profile: pixel_5
           force-avd-creation: false
-          disable-animations: true
-          emulator-options: -no-snapshot-save
+          emulator-options: -no-snapshot-save -no-window -noaudio -no-boot-anim -camera-back none
           script: bash scripts/run-automation.sh
 
       - name: Upload screenshots
