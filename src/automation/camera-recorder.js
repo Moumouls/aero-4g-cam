@@ -19,13 +19,32 @@ const IDS = {
     CAMERA_THUMBNAIL: 'id=cn.ubia.ubox:id/cameraListItemThumbnail',
     FULLSCREEN_BUTTON: 'id=cn.ubia.ubox:id/full_btn',
     REMOVE_CONTROL_LAYOUT: 'id=cn.ubia.ubox:id/monitorLayout',
-    LIGHT_BUTTON: 'id=cn.ubia.ubox:id/light_button',
+    RECONNECT_BUTTON: 'id=cn.ubia.ubox:id/reconnect_btn',
 }
 
 const VERBOSE = !!process.env.VERBOSE
 const USE_FS = false
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Waits for the camera stream to be ready and clicks through the tutorial.
+ * This function is used in retry logic for camera connection.
+ * @param {object} driver - The Appium driver instance
+ * @param {Logger} logger - Logger instance for logging
+ */
+async function waitForCameraStream(driver, logger) {
+    const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
+
+    // Important to wait here for the stream to be ready
+    await tutoCameraButton.waitForExist({ timeout: 30000 });
+
+    // Click through tutorial
+    for (let i = 0; i < 9; i++) {
+        await tutoCameraButton.click();
+        await sleep(100);
+    }
+}
 
 
 async function recordCamera() {
@@ -81,7 +100,7 @@ async function recordCamera() {
         const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
         await cancelNotificationButton.waitForExist({ timeout: 30000 });
         await cancelNotificationButton.click();
-
+        await driver.debug();
         const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
         await tutoHomeButton.waitForExist({ timeout: 10000 });
         await sleep(100);
@@ -95,30 +114,35 @@ async function recordCamera() {
 
         await sleep(5000);
 
+        // Click on camera thumbnail to open camera view
         const cameraThumbnail = await driver.$(IDS.CAMERA_THUMBNAIL);
         await cameraThumbnail.waitForExist({ timeout: 10000 });
         await cameraThumbnail.click();
 
-        const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
-        // Important to wait here for the stream to be ready
-        await tutoCameraButton.waitForExist({ timeout: 60000 });
-        await tutoCameraButton.click();
-        await sleep(100);
-        await tutoCameraButton.click();
-        await sleep(100);
-        await tutoCameraButton.click();
-        await sleep(100);
-        await tutoCameraButton.click();
-        await sleep(100);
-        await tutoCameraButton.click();
-        await sleep(100);
-        await tutoCameraButton.click();
-        await sleep(100);
-        await tutoCameraButton.click();
-        await sleep(100);
-        await tutoCameraButton.click();
-        await sleep(100);
-        await tutoCameraButton.click();
+        // Retry logic for camera connection with reconnect button
+        const maxRetries = 3;
+        let retryCount = 0;
+        let cameraConnected = false;
+
+        while (retryCount < maxRetries && !cameraConnected) {
+            try {
+                await waitForCameraStream(driver, logger);
+                cameraConnected = true;
+            } catch (error) {
+                console.error(error);
+                retryCount++;
+
+                if (retryCount >= maxRetries) {
+                    throw error;
+                }
+
+                // Click on reconnect button and retry
+                const reconnectButton = await driver.$(IDS.RECONNECT_BUTTON);
+                await reconnectButton.waitForExist({ timeout: 10000 });
+                await reconnectButton.click();
+                await sleep(2000);
+            }
+        }
 
         const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
         await fullscreenButton.waitForExist({ timeout: 10000 });

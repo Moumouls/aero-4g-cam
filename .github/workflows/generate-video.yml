@@ -98,7 +98,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           ram-size: 4096
-          cores: 4
+          cores: 2
           script: bash scripts/run-automation.sh
 
       - name: Upload screenshots

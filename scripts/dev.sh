@@ -128,25 +128,31 @@ for i in {1..10}; do
 done
 [ "$VERBOSE" = "true" ] || [ "$VERBOSE" = "1" ] && echo ""
 
-# 2. Check if emulator AVD exists
+# 2. Check if emulator AVD exists and recreate with Pixel 2
 log_info "📱 Step 2/4: Checking emulator..."
-if ! "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" list avd 2>/dev/null | grep -q "test_emulator"; then
-    log_info "Creating emulator AVD for $SYSTEM_IMAGE_ARCH..."
+if "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" list avd 2>/dev/null | grep -q "test_emulator"; then
+    log_info "Removing existing emulator AVD to recreate with Pixel 2..."
     if [ "$VERBOSE" = "true" ] || [ "$VERBOSE" = "1" ]; then
-        echo "no" | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd \
-            -n test_emulator \
-            -k "system-images;android-33;google_apis;$SYSTEM_IMAGE_ARCH" \
-            -d pixel_5 \
-            --force
+        "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" delete avd -n test_emulator
     else
-        echo "no" | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd \
-            -n test_emulator \
-            -k "system-images;android-33;google_apis;$SYSTEM_IMAGE_ARCH" \
-            -d pixel_5 \
-            --force > /dev/null 2>&1
+        "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" delete avd -n test_emulator > /dev/null 2>&1
     fi
 fi
-log_success "✅ Emulator AVD ready"
+log_info "Creating emulator AVD for $SYSTEM_IMAGE_ARCH with Pixel 2..."
+if [ "$VERBOSE" = "true" ] || [ "$VERBOSE" = "1" ]; then
+    echo "no" | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd \
+        -n test_emulator \
+        -k "system-images;android-33;google_apis;$SYSTEM_IMAGE_ARCH" \
+        -d pixel_2 \
+        --force
+else
+    echo "no" | "$ANDROID_HOME/cmdline-tools/latest/bin/avdmanager" create avd \
+        -n test_emulator \
+        -k "system-images;android-33;google_apis;$SYSTEM_IMAGE_ARCH" \
+        -d pixel_2 \
+        --force > /dev/null 2>&1
+fi
+log_success "✅ Emulator AVD ready (Pixel 2)"
 [ "$VERBOSE" = "true" ] || [ "$VERBOSE" = "1" ] && echo ""
 
 # 3. Start emulator WITH window (for dev mode)
