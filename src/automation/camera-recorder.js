@@ -16,6 +16,7 @@ const IDS = {
     CAMERA_THUMBNAIL: 'id=cn.ubia.ubox:id/cameraListItemThumbnail',
     FULLSCREEN_BUTTON: 'id=cn.ubia.ubox:id/full_btn',
     REMOVE_CONTROL_LAYOUT: 'id=cn.ubia.ubox:id/monitorLayout',
+    LIGHT_BUTTON: 'id=cn.ubia.ubox:id/light_button',
 }
 
 const VERBOSE = !!process.env.VERBOSE
@@ -36,13 +37,21 @@ async function recordCamera() {
 
     const driver = await createDriver();
 
+    await sleep(1000);
+
+
     const element = await driver.$(IDS.AGREEMENT_BUTTON);
     await element.waitForDisplayed({ timeout: 30000 });
     await element.click();
 
+    await sleep(3000);
+
     const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
     await firstLoginButton.waitForDisplayed({ timeout: 30000 });
     await firstLoginButton.click();
+
+    await sleep(1000);
+
 
     const emailInput = await driver.$(IDS.EMAIL_INPUT);
     await emailInput.waitForDisplayed({ timeout: 30000 });
@@ -74,7 +83,10 @@ async function recordCamera() {
     await cameraThumbnail.waitForDisplayed({ timeout: 30000 });
     await cameraThumbnail.click();
 
-    await sleep(10000);
+    const waitStream = await driver.$(IDS.LIGHT_BUTTON);
+    await waitStream.waitForDisplayed({ timeout: 30000 });
+
+    await sleep(1000);
 
     if (VERBOSE) await driver.saveScreenshot('./screenshots/camera_home.png');
 
