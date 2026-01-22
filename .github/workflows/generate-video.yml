@@ -14,8 +14,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          lfs: true
+
+      - name: Download UBox.xapk
+        run: |
+          curl -L -o UBox.xapk https://pub-51ba0aed33f74669a4a1cb1095e33dfb.r2.dev/UBox.xapk
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

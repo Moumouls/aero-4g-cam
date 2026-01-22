@@ -18,7 +18,7 @@ const IDS = {
     TUTO_CONTAINER: 'id=cn.ubia.ubox:id/fl_container',
     CAMERA_THUMBNAIL: 'id=cn.ubia.ubox:id/cameraListItemThumbnail',
     FULLSCREEN_BUTTON: 'id=cn.ubia.ubox:id/full_btn',
-    REMOVE_CONTROL_LAYOUT: 'id=cn.ubia.ubox:id/monitorLayout',
+    REMOVE_CONTROL_LAYOUT: 'id=cn.ubia.ubox:id/ptz_conter',
     RECONNECT_BUTTON: 'id=cn.ubia.ubox:id/reconnect_btn',
 }
 
@@ -51,8 +51,11 @@ async function waitForCameraStream(driver, logger) {
         await tutoCameraButton.waitForExist({ timeout: 30000 });
 
     } catch (error) {
+
+        const tutoImage = await driver.$("//android.widget.ImageView");
+        const isExisting = await tutoImage.isExisting();
         // Counter last tuto frame button
-        if (!driver.isExisting("//android.widget.ImageView")) {
+        if (!isExisting) {
             // We are not stuck in the tuto, so we can throw an error
             throw new Error("Camera stream not ready");
         }
@@ -97,6 +100,7 @@ async function recordCamera() {
     validator.printConfig();
 
     const driver = await createDriver();
+
 
     try {
 
@@ -177,7 +181,7 @@ async function recordCamera() {
         const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
         await fullscreenButton.waitForExist({ timeout: 10000 });
         await fullscreenButton.click();
-        await sleep(1000);
+        await sleep(3000);
 
         const removeControlLayout = await driver.$(IDS.REMOVE_CONTROL_LAYOUT);
         await removeControlLayout.waitForExist({ timeout: 10000 });
