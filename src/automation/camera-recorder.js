@@ -46,32 +46,10 @@ const skipTuto = async (driver) => {
 async function waitForCameraStream(driver, logger) {
     const tutoCameraButton = await driver.$(IDS.TUTO_CONTAINER);
 
-    try {
-        // Important to wait here for the stream to be ready
-        await tutoCameraButton.waitForExist({ timeout: 30000 });
 
-    } catch (error) {
+    // Important to wait here for the stream to be ready
+    await tutoCameraButton.waitForExist({ timeout: 30000 });
 
-        const tutoImage = await driver.$("//android.widget.ImageView");
-        const isExisting = await tutoImage.isExisting();
-        // Counter last tuto frame button
-        if (!isExisting) {
-            // We are not stuck in the tuto, so we can throw an error
-            throw new Error("Camera stream not ready");
-        }
-
-        for (let i = 0; i < 2; i++) {
-            await sleep(100);
-            await driver
-                .action('pointer', { parameters: { pointerType: 'touch' } })
-                .move({ x: 88, y: 327 })
-                .down({ button: 0 })
-                .pause(100)
-                .up({ button: 0 })
-                .perform();
-        }
-        return
-    }
 
     await skipTuto(driver);
 
@@ -153,35 +131,13 @@ async function recordCamera() {
         await cameraThumbnail.waitForExist({ timeout: 10000 });
         await cameraThumbnail.click();
 
-        // Retry logic for camera connection with reconnect button
-        const maxRetries = 3;
-        let retryCount = 0;
-        let cameraConnected = false;
+        await waitForCameraStream(driver, logger);
 
-        while (retryCount < maxRetries && !cameraConnected) {
-            try {
-                await waitForCameraStream(driver, logger);
-                cameraConnected = true;
-            } catch (error) {
-                console.error(error);
-                retryCount++;
-
-                if (retryCount >= maxRetries) {
-                    throw error;
-                }
-
-                // Click on reconnect button and retry
-                const reconnectButton = await driver.$(IDS.RECONNECT_BUTTON);
-                await reconnectButton.waitForExist({ timeout: 10000 });
-                await reconnectButton.click();
-                await sleep(2000);
-            }
-        }
 
         const fullscreenButton = await driver.$(IDS.FULLSCREEN_BUTTON);
         await fullscreenButton.waitForExist({ timeout: 10000 });
         await fullscreenButton.click();
-        await sleep(3000);
+        await sleep(2000);
 
         const removeControlLayout = await driver.$(IDS.REMOVE_CONTROL_LAYOUT);
         await removeControlLayout.waitForExist({ timeout: 10000 });
