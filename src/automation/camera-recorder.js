@@ -147,7 +147,7 @@ async function recordCamera() {
         await driver.startRecordingScreen({
             videoSize: '1280x720',
             timeLimit: '60', // 30 minutes max
-            bitRate: '2000000' // 2 Mbps
+            bitRate: '5000000' // 2 Mbps
         });
 
         // wait 10 seconds before stopping the recording
