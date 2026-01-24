@@ -12,7 +12,6 @@ const REQUIRED_VARS = {
 
 const OPTIONAL_VARS = {
     RECORDING_DURATION: "30000",
-    SCREEN_ORIENTATION: "LANDSCAPE",
 };
 
 class EnvironmentValidator {

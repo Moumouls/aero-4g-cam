@@ -148,3 +148,5 @@ terrain.mp4
 .DS_Store
 recordings/
 !recordings/.gitkeep
+recordings/
+!recordings/.gitkeep
