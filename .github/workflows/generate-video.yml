@@ -7,10 +7,10 @@ on:
   schedule:
     # Samedi : 9h, 10h, 11h, 14h, 15h, 16h (Europe/Paris été UTC+2)
     # En hiver (UTC+1) : 8h, 9h, 10h, 13h, 14h, 15h
-    - cron: '0 7,8,9,12,13,14 * * 6'
+    - cron: "0 7,8,9,12,13,14 * * 6"
     # Dimanche : 9h, 10h, 11h, 14h, 15h, 16h (Europe/Paris été UTC+2)
     # En hiver (UTC+1) : 8h, 9h, 10h, 13h, 14h, 15h
-    - cron: '0 7,8,9,12,13,14 * * 0'
+    - cron: "0 7,8,9,12,13,14 * * 0"
 
 jobs:
   attempt-1:
