@@ -4,6 +4,10 @@
  * Variables d'environnement requises:
  * - GITHUB_TOKEN: Personal Access Token GitHub avec permissions 'repo' et 'workflow'
  * - API_SECRET: Secret pour sécuriser l'endpoint (optionnel mais recommandé)
+ * 
+ * Supporte:
+ * - Requêtes HTTP POST manuelles
+ * - Cloudflare Cron Triggers (scheduled)
  */
 
 // Configuration hard-codée
@@ -12,7 +16,43 @@ const GITHUB_REPO = 'aero-4g-cam';
 const WORKFLOW_ID = 'generate-video.yml';
 const BRANCH = 'dev';
 
+/**
+ * Fonction pour déclencher le workflow GitHub
+ */
+async function triggerGitHubWorkflow(env) {
+  // Récupération du token GitHub
+  const GITHUB_TOKEN = env.GITHUB_TOKEN;
+
+  // Vérification du token
+  if (!GITHUB_TOKEN) {
+    throw new Error('Missing GITHUB_TOKEN environment variable');
+  }
+
+  // Construction de l'URL de l'API GitHub
+  const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`;
+
+  // Appel à l'API GitHub pour déclencher le workflow
+  const response = await fetch(apiUrl, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${GITHUB_TOKEN}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      'Content-Type': 'application/json',
+      'User-Agent': 'Cloudflare-Worker',
+    },
+    body: JSON.stringify({
+      ref: BRANCH,
+    }),
+  });
+
+  return response;
+}
+
 export default {
+  /**
+   * Handler pour les requêtes HTTP
+   */
   async fetch(request, env, ctx) {
     // Gestion CORS
     const corsHeaders = {
@@ -68,43 +108,8 @@ export default {
         }
       }
 
-      // Récupération du token GitHub
-      const GITHUB_TOKEN = env.GITHUB_TOKEN;
-
-      // Vérification du token
-      if (!GITHUB_TOKEN) {
-        return new Response(
-          JSON.stringify({
-            error: 'Configuration error',
-            message: 'Missing GITHUB_TOKEN environment variable',
-          }),
-          {
-            status: 500,
-            headers: {
-              'Content-Type': 'application/json',
-              ...corsHeaders,
-            },
-          }
-        );
-      }
-
-      // Construction de l'URL de l'API GitHub
-      const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/actions/workflows/${WORKFLOW_ID}/dispatches`;
-
-      // Appel à l'API GitHub pour déclencher le workflow
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/vnd.github+json',
-          'Authorization': `Bearer ${GITHUB_TOKEN}`,
-          'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/json',
-          'User-Agent': 'Cloudflare-Worker',
-        },
-        body: JSON.stringify({
-          ref: BRANCH,
-        }),
-      });
+      // Appel à la fonction pour déclencher le workflow
+      const response = await triggerGitHubWorkflow(env);
 
       // Vérification de la réponse GitHub
       if (response.status === 204) {
@@ -157,6 +162,36 @@ export default {
           },
         }
       );
+    }
+  },
+
+  /**
+   * Handler pour les Cloudflare Cron Triggers
+   * Configure dans le dashboard Cloudflare ou via wrangler.toml
+   */
+  async scheduled(event, env, ctx) {
+    try {
+      console.log('Cron trigger received at:', new Date(event.scheduledTime).toISOString());
+      
+      // Appel à la fonction pour déclencher le workflow
+      const response = await triggerGitHubWorkflow(env);
+
+      // Vérification de la réponse GitHub
+      if (response.status === 204) {
+        console.log('Workflow triggered successfully via cron');
+        console.log(`Repository: ${GITHUB_OWNER}/${GITHUB_REPO}`);
+        console.log(`Workflow: ${WORKFLOW_ID}`);
+        console.log(`Branch: ${BRANCH}`);
+      } else {
+        const errorText = await response.text();
+        console.error('Failed to trigger workflow via cron');
+        console.error(`Status: ${response.status}`);
+        console.error(`Details: ${errorText}`);
+        throw new Error(`GitHub API returned status ${response.status}: ${errorText}`);
+      }
+    } catch (error) {
+      console.error('Error in scheduled trigger:', error.message);
+      throw error; // Re-throw pour que Cloudflare enregistre l'échec
     }
   },
 };
