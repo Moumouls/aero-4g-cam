@@ -13,16 +13,16 @@ jobs:
     uses: ./.github/workflows/generate-video-job.yml
     secrets: inherit
 
-  attempt-2:
-    name: Generate Video (Attempt 2)
-    needs: attempt-1
-    if: failure()
-    uses: ./.github/workflows/generate-video-job.yml
-    secrets: inherit
+  # attempt-2:
+  #   name: Generate Video (Attempt 2)
+  #   needs: attempt-1
+  #   if: failure()
+  #   uses: ./.github/workflows/generate-video-job.yml
+  #   secrets: inherit
 
-  attempt-3:
-    name: Generate Video (Attempt 3 - Final)
-    needs: [attempt-1, attempt-2]
-    if: always() && needs.attempt-1.result == 'failure' && needs.attempt-2.result == 'failure'
-    uses: ./.github/workflows/generate-video-job.yml
-    secrets: inherit
+  # attempt-3:
+  #   name: Generate Video (Attempt 3 - Final)
+  #   needs: [attempt-1, attempt-2]
+  #   if: always() && needs.attempt-1.result == 'failure' && needs.attempt-2.result == 'failure'
+  #   uses: ./.github/workflows/generate-video-job.yml
+  #   secrets: inherit

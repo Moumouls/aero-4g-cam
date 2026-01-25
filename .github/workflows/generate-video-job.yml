@@ -115,20 +115,50 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Run Android Emulator with ARM translation
+      - name: Run Android Emulator with ARM translation (Attempt 1)
+        id: emulator-attempt-1
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
           target: google_apis
+          force-avd-creation: false
           arch: x86_64
           profile: pixel_5
           ram-size: 4096
           script: bash scripts/run-automation.sh
 
-      # - name: Upload screenshots
-      #   if: always()
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: screenshots
-      #     path: screenshots
-      #     if-no-files-found: ignore
+      - name: Run Android Emulator with ARM translation (Attempt 2)
+        id: emulator-attempt-2
+        if: steps.emulator-attempt-1.outcome == 'failure'
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          force-avd-creation: false
+          arch: x86_64
+          profile: pixel_5
+          ram-size: 4096
+          script: bash scripts/run-automation.sh
+
+      - name: Run Android Emulator with ARM translation (Attempt 3)
+        id: emulator-attempt-3
+        if: steps.emulator-attempt-2.outcome == 'failure'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          force-avd-creation: false
+          arch: x86_64
+          profile: pixel_5
+          ram-size: 4096
+          script: bash scripts/run-automation.sh
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: ignore
