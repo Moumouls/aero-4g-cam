@@ -14,7 +14,7 @@
 const GITHUB_OWNER = 'Moumouls';
 const GITHUB_REPO = 'aero-4g-cam';
 const WORKFLOW_ID = 'generate-video.yml';
-const BRANCH = 'dev';
+const BRANCH = 'master';
 
 /**
  * Fonction pour déclencher le workflow GitHub
@@ -172,7 +172,7 @@ export default {
   async scheduled(event, env, ctx) {
     try {
       console.log('Cron trigger received at:', new Date(event.scheduledTime).toISOString());
-      
+
       // Appel à la fonction pour déclencher le workflow
       const response = await triggerGitHubWorkflow(env);
 
