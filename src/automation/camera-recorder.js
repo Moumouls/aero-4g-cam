@@ -151,7 +151,7 @@ async function recordCamera() {
         });
 
         // wait 10 seconds before stopping the recording
-        await sleep(12000);
+        await sleep(15000);
 
         const videoBase64 = await driver.stopRecordingScreen();
 
