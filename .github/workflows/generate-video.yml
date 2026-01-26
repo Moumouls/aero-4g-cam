@@ -31,27 +31,15 @@ jobs:
         run: |
           curl -L -o UBox.xapk https://pub-51ba0aed33f74669a4a1cb1095e33dfb.r2.dev/UBox.xapk
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24.9"
-
-      - name: Enable Yarn
+      - name: Enable Corepack (for setup-node cache)
         run: corepack enable
 
-      - name: Get Yarn cache directory
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
-
-      - name: Cache Yarn dependencies
-        uses: actions/cache@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
         with:
-          path: |
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
-            node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
+          node-version: "24.9"
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
       - name: Install dependencies
         run: yarn install --immutable
@@ -113,7 +101,7 @@ jobs:
           target: google_apis
           force-avd-creation: false
           arch: x86_64
-          profile: pixel_5
+          profile: "Galaxy Nexus"
           ram-size: 8192
           cores: 3
           script: bash scripts/run-automation.sh
@@ -128,7 +116,7 @@ jobs:
           target: google_apis
           force-avd-creation: false
           arch: x86_64
-          profile: pixel_5
+          profile: "Galaxy Nexus"
           cores: 3
           ram-size: 4096
           script: bash scripts/run-automation.sh
@@ -143,7 +131,7 @@ jobs:
           target: google_apis
           force-avd-creation: false
           arch: x86_64
-          profile: pixel_5
+          profile: "Galaxy Nexus"
           cores: 3
           ram-size: 8192
           script: bash scripts/run-automation.sh
@@ -157,7 +145,7 @@ jobs:
           target: google_apis
           force-avd-creation: false
           arch: x86_64
-          profile: pixel_5
+          profile: "Galaxy Nexus"
           cores: 3
           ram-size: 8192
           script: bash scripts/run-automation.sh
