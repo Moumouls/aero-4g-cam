@@ -114,7 +114,8 @@ jobs:
           force-avd-creation: false
           arch: x86_64
           profile: pixel_5
-          ram-size: 4096
+          ram-size: 8192
+          cores: 3
           script: bash scripts/run-automation.sh
 
       - name: Run Android Emulator with ARM translation (Attempt 2)
@@ -128,6 +129,7 @@ jobs:
           force-avd-creation: false
           arch: x86_64
           profile: pixel_5
+          cores: 3
           ram-size: 4096
           script: bash scripts/run-automation.sh
 
@@ -142,7 +144,8 @@ jobs:
           force-avd-creation: false
           arch: x86_64
           profile: pixel_5
-          ram-size: 4096
+          cores: 3
+          ram-size: 8192
           script: bash scripts/run-automation.sh
 
       - name: Run Android Emulator with ARM translation (Attempt 4)
@@ -155,7 +158,8 @@ jobs:
           force-avd-creation: false
           arch: x86_64
           profile: pixel_5
-          ram-size: 4096
+          cores: 3
+          ram-size: 8192
           script: bash scripts/run-automation.sh
 
       # - name: Upload screenshots
