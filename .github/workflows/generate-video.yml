@@ -31,15 +31,15 @@ jobs:
         run: |
           curl -L -o UBox.xapk https://pub-51ba0aed33f74669a4a1cb1095e33dfb.r2.dev/UBox.xapk
 
+      - name: Enable Corepack (for setup-node cache)
+        run: corepack enable
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "24.9"
           cache: yarn
           cache-dependency-path: yarn.lock
-
-      - name: Enable Yarn
-        run: corepack enable
 
       - name: Install dependencies
         run: yarn install --immutable
