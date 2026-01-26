@@ -71,16 +71,17 @@ async function waitForCameraStream(driver, logger) {
 
     await skipTuto(driver);
 
-    for (let i = 0; i < 2; i++) {
-        await sleep(100);
-        await driver
-            .action('pointer', { parameters: { pointerType: 'touch' } })
-            .move({ x: NEXUS_5X_RECORD_CAMERA_COORDINATES.x, y: NEXUS_5X_RECORD_CAMERA_COORDINATES.y })
-            .down({ button: 0 })
-            .pause(100)
-            .up({ button: 0 })
-            .perform();
-    }
+    // Double click is needed for pixel 5
+    //for (let i = 0; i < 2; i++) {
+    await sleep(100);
+    await driver
+        .action('pointer', { parameters: { pointerType: 'touch' } })
+        .move({ x: NEXUS_5X_RECORD_CAMERA_COORDINATES.x, y: NEXUS_5X_RECORD_CAMERA_COORDINATES.y })
+        .down({ button: 0 })
+        .pause(100)
+        .up({ button: 0 })
+        .perform();
+    //}
 
 }
 
@@ -168,7 +169,7 @@ async function recordCamera() {
         });
 
         // wait 10 seconds before stopping the recording
-        await sleep(20000);
+        await sleep(15000);
 
         const videoBase64 = await driver.stopRecordingScreen();
 
