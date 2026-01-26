@@ -26,12 +26,30 @@ const VERBOSE = !!process.env.VERBOSE
 const USE_FS = false
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+/*
+const PIXEL_5_SKIP_TUTO_COORDINATES = {
+    x: 855,
+    y: 200
+}
 
+const PIXEL_5_RECORD_CAMERA_COORDINATES = {
+    x: 88,
+    y: 327
+}
+*/
+const NEXUS_5X_SKIP_TUTO_COORDINATES = {
+    x: 822,
+    y: 92
+}
 
+const NEXUS_5X_RECORD_CAMERA_COORDINATES = {
+    x: 82,
+    y: 315
+}
 const skipTuto = async (driver) => {
     await driver
         .action('pointer', { parameters: { pointerType: 'touch' } })
-        .move({ x: 855, y: 200 })
+        .move({ x: NEXUS_5X_SKIP_TUTO_COORDINATES.x, y: NEXUS_5X_SKIP_TUTO_COORDINATES.y })
         .down({ button: 0 })
         .pause(100)
         .up({ button: 0 })
@@ -57,7 +75,7 @@ async function waitForCameraStream(driver, logger) {
         await sleep(100);
         await driver
             .action('pointer', { parameters: { pointerType: 'touch' } })
-            .move({ x: 88, y: 327 })
+            .move({ x: NEXUS_5X_RECORD_CAMERA_COORDINATES.x, y: NEXUS_5X_RECORD_CAMERA_COORDINATES.y })
             .down({ button: 0 })
             .pause(100)
             .up({ button: 0 })

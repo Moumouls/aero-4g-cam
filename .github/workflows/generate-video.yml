@@ -113,7 +113,7 @@ jobs:
           target: google_apis
           force-avd-creation: false
           arch: x86_64
-          profile: pixel_5
+          profile: "Nexus 5X"
           ram-size: 8192
           cores: 3
           script: bash scripts/run-automation.sh
@@ -128,7 +128,7 @@ jobs:
           target: google_apis
           force-avd-creation: false
           arch: x86_64
-          profile: pixel_5
+          profile: "Nexus 5X"
           cores: 3
           ram-size: 4096
           script: bash scripts/run-automation.sh
@@ -143,7 +143,7 @@ jobs:
           target: google_apis
           force-avd-creation: false
           arch: x86_64
-          profile: pixel_5
+          profile: "Nexus 5X"
           cores: 3
           ram-size: 8192
           script: bash scripts/run-automation.sh
@@ -157,7 +157,7 @@ jobs:
           target: google_apis
           force-avd-creation: false
           arch: x86_64
-          profile: pixel_5
+          profile: "Nexus 5X"
           cores: 3
           ram-size: 8192
           script: bash scripts/run-automation.sh
