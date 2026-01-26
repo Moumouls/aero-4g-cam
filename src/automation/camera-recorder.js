@@ -46,10 +46,21 @@ const NEXUS_5X_RECORD_CAMERA_COORDINATES = {
     x: 82,
     y: 315
 }
+
+const GALAXY_NEXUS_SKIP_TUTO_COORDINATES = {
+    x: 548,
+    y: 72
+}
+
+const GALAXY_NEXUS_RECORD_CAMERA_COORDINATES = {
+    x: 50,
+    y: 194
+}
+
 const skipTuto = async (driver) => {
     await driver
         .action('pointer', { parameters: { pointerType: 'touch' } })
-        .move({ x: NEXUS_5X_SKIP_TUTO_COORDINATES.x, y: NEXUS_5X_SKIP_TUTO_COORDINATES.y })
+        .move({ x: GALAXY_NEXUS_SKIP_TUTO_COORDINATES.x, y: GALAXY_NEXUS_SKIP_TUTO_COORDINATES.y })
         .down({ button: 0 })
         .pause(100)
         .up({ button: 0 })
@@ -72,16 +83,17 @@ async function waitForCameraStream(driver, logger) {
     await skipTuto(driver);
 
     // Double click is needed for pixel 5
-    //for (let i = 0; i < 2; i++) {
-    await sleep(100);
-    await driver
-        .action('pointer', { parameters: { pointerType: 'touch' } })
-        .move({ x: NEXUS_5X_RECORD_CAMERA_COORDINATES.x, y: NEXUS_5X_RECORD_CAMERA_COORDINATES.y })
-        .down({ button: 0 })
-        .pause(100)
-        .up({ button: 0 })
-        .perform();
-    //}
+    for (let i = 0; i < 2; i++) {
+        await sleep(100);
+
+        await driver
+            .action('pointer', { parameters: { pointerType: 'touch' } })
+            .move({ x: GALAXY_NEXUS_RECORD_CAMERA_COORDINATES.x, y: GALAXY_NEXUS_RECORD_CAMERA_COORDINATES.y })
+            .down({ button: 0 })
+            .pause(100)
+            .up({ button: 0 })
+            .perform();
+    }
 
 }
 
@@ -164,12 +176,12 @@ async function recordCamera() {
         await sleep(1000);
 
         await driver.startRecordingScreen({
-            videoSize: '1920x1080',
+            videoSize: '1280x720',
             timeLimit: '60', // 30 minutes max
         });
 
         // wait 10 seconds before stopping the recording
-        await sleep(15000);
+        await sleep(5000);
 
         const videoBase64 = await driver.stopRecordingScreen();
 
