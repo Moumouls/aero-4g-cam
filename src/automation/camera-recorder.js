@@ -181,9 +181,10 @@ async function recordCamera() {
         });
 
         // wait 10 seconds before stopping the recording
-        await sleep(15000);
+        await sleep(10000);
 
         const videoBase64 = await driver.stopRecordingScreen();
+        await sleep(5000);
 
         // quit the app
         await driver.execute('mobile: terminateApp', { appId: 'cn.ubia.ubox' })
