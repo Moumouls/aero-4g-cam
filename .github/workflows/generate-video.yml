@@ -32,26 +32,14 @@ jobs:
           curl -L -o UBox.xapk https://pub-51ba0aed33f74669a4a1cb1095e33dfb.r2.dev/UBox.xapk
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24.9"
+          cache: yarn
+          cache-dependency-path: yarn.lock
 
       - name: Enable Yarn
         run: corepack enable
-
-      - name: Get Yarn cache directory
-        id: yarn-cache-dir-path
-        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
-
-      - name: Cache Yarn dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ${{ steps.yarn-cache-dir-path.outputs.dir }}
-            node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
 
       - name: Install dependencies
         run: yarn install --immutable
