@@ -92,6 +92,29 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Cache Android AVD
+        id: avd-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ runner.os }}-api-35-google_apis-x86_64-galaxy-nexus
+
+      - name: Create AVD, install app, and snapshot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          force-avd-creation: false
+          arch: x86_64
+          profile: "Galaxy Nexus"
+          ram-size: 8192
+          cores: 3
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: bash scripts/install-app.sh
+
       - name: Run Android Emulator with ARM translation (Attempt 1)
         id: emulator-attempt-1
         continue-on-error: true
@@ -104,6 +127,7 @@ jobs:
           profile: "Galaxy Nexus"
           ram-size: 8192
           cores: 3
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
       - name: Run Android Emulator with ARM translation (Attempt 2)
@@ -118,7 +142,8 @@ jobs:
           arch: x86_64
           profile: "Galaxy Nexus"
           cores: 3
-          ram-size: 4096
+          ram-size: 8192
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
       - name: Run Android Emulator with ARM translation (Attempt 3)
@@ -134,6 +159,7 @@ jobs:
           profile: "Galaxy Nexus"
           cores: 3
           ram-size: 8192
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
       - name: Run Android Emulator with ARM translation (Attempt 4)
@@ -148,6 +174,7 @@ jobs:
           profile: "Galaxy Nexus"
           cores: 3
           ram-size: 8192
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
       # - name: Upload screenshots
