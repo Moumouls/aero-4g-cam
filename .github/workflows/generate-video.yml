@@ -17,9 +17,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache Android AVD
+        id: avd-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ runner.os }}-api-35-google_apis-x86_64-galaxy-nexus
+
       - name: Cache UBox.xapk
         id: cache-ubox
         uses: actions/cache@v4
+        if: steps.avd-cache.outputs.cache-hit != 'true'
         with:
           path: UBox.xapk
           key: ubox-xapk-${{ hashFiles('UBox.xapk') }}
@@ -27,7 +37,7 @@ jobs:
             ubox-xapk-
 
       - name: Download UBox.xapk
-        if: steps.cache-ubox.outputs.cache-hit != 'true'
+        if: steps.avd-cache.outputs.cache-hit != 'true' && steps.cache-ubox.outputs.cache-hit != 'true'
         run: |
           curl -L -o UBox.xapk https://pub-51ba0aed33f74669a4a1cb1095e33dfb.r2.dev/UBox.xapk
 
@@ -45,6 +55,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Extract XAPK to split APKs
+        if: steps.avd-cache.outputs.cache-hit != 'true'
         run: |
           # Extract XAPK (it's a ZIP file)
           if [ -f "UBox.xapk" ]; then
@@ -91,15 +102,6 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-
-      - name: Cache Android AVD
-        id: avd-cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-${{ runner.os }}-api-35-google_apis-x86_64-galaxy-nexus
 
       - name: Create AVD, install app, and snapshot
         if: steps.avd-cache.outputs.cache-hit != 'true'

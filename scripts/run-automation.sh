@@ -3,30 +3,6 @@ set -e
 
 echo "📱 Emulator is ready!"
 
-# Show device info
-echo "📱 Device info:"
-adb shell getprop ro.build.version.release
-adb shell getprop ro.product.model
-adb devices -l
-
-# Verify ARM translation support
-echo "🔍 Checking ARM ABI support on emulator..."
-adb shell getprop ro.product.cpu.abilist | tee /tmp/abi_list.txt || echo "unknown" > /tmp/abi_list.txt
-echo "Supported ABIs: $(cat /tmp/abi_list.txt)"
-if grep -q "arm64-v8a" /tmp/abi_list.txt; then
-    echo "✅ arm64-v8a is supported"
-else
-    echo "⚠️ arm64-v8a is NOT supported - ARM APK installation may fail"
-fi
-
-adb shell getprop ro.dalvik.vm.native.bridge | tee /tmp/native_bridge.txt || echo "none" > /tmp/native_bridge.txt
-echo "Native bridge: $(cat /tmp/native_bridge.txt)"
-if grep -q "libndk" /tmp/native_bridge.txt; then
-    echo "✅ ARM translation (libndk_translation) is active"
-else
-    echo "⚠️ ARM translation bridge: $(cat /tmp/native_bridge.txt)"
-fi
-
 # Start Appium server in background
 echo "📱 Starting Appium server..."
 yarn exec appium --allow-cors > /tmp/appium.log 2>&1 &
