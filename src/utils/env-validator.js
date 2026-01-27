@@ -29,7 +29,6 @@ class EnvironmentValidator {
 
         this.checkRequiredVars();
         this.checkOptionalVars();
-        this.checkPathsExist();
 
         if (this.errors.length > 0) {
             console.error("❌ Validation failed with errors:");
@@ -78,38 +77,6 @@ class EnvironmentValidator {
             );
         }
     }
-
-    checkPathsExist() {
-        const fs = require("fs");
-        const splitApksDir = "./split-apks";
-
-        if (!fs.existsSync(splitApksDir)) {
-            this.errors.push(
-                `Split APKs directory not found at ${splitApksDir}. Please run setup.sh to extract the XAPK`
-            );
-        } else {
-            const apkFiles = fs.readdirSync(splitApksDir).filter(f => f.endsWith('.apk'));
-            if (apkFiles.length === 0) {
-                this.errors.push(
-                    `No APK files found in ${splitApksDir}. Please run setup.sh to extract the XAPK`
-                );
-            }
-        }
-    }
-
-    printConfig() {
-        const isVerbose = process.env.VERBOSE === "true" || process.env.VERBOSE === "1";
-
-        if (isVerbose) {
-            console.log("📋 Current Configuration:");
-            console.log("  R2 Endpoint:", process.env.R2_ENDPOINT?.substring(0, 50) + "...");
-            console.log("  R2 Bucket:", process.env.R2_BUCKET_NAME);
-            console.log("  App Package: cn.ubia.ubox (pre-installed from split APKs)");
-            console.log("  Recording Duration:", `${process.env.RECORDING_DURATION}ms`);
-            console.log("  Screen Orientation:", process.env.SCREEN_ORIENTATION);
-            console.log("");
-        }
-    }
 }
 
 // Export for use in other modules
@@ -119,9 +86,6 @@ module.exports = { EnvironmentValidator, REQUIRED_VARS, OPTIONAL_VARS };
 if (require.main === module) {
     const validator = new EnvironmentValidator();
     const isValid = validator.validate();
-    if (isValid) {
-        validator.printConfig();
-    }
     process.exit(isValid ? 0 : 1);
 }
 

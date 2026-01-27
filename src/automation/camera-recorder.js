@@ -106,7 +106,6 @@ async function recordCamera() {
     if (!validator.validate()) {
         throw new Error("Environment validation failed");
     }
-    validator.printConfig();
 
     const driver = await createDriver();
 

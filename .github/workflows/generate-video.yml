@@ -17,9 +17,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Cache Android AVD
+        id: avd-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-${{ runner.os }}-api-35-google_apis-x86_64-galaxy-nexus
+
       - name: Cache UBox.xapk
         id: cache-ubox
         uses: actions/cache@v4
+        if: steps.avd-cache.outputs.cache-hit != 'true'
         with:
           path: UBox.xapk
           key: ubox-xapk-${{ hashFiles('UBox.xapk') }}
@@ -27,7 +37,7 @@ jobs:
             ubox-xapk-
 
       - name: Download UBox.xapk
-        if: steps.cache-ubox.outputs.cache-hit != 'true'
+        if: steps.avd-cache.outputs.cache-hit != 'true' && steps.cache-ubox.outputs.cache-hit != 'true'
         run: |
           curl -L -o UBox.xapk https://pub-51ba0aed33f74669a4a1cb1095e33dfb.r2.dev/UBox.xapk
 
@@ -45,6 +55,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Extract XAPK to split APKs
+        if: steps.avd-cache.outputs.cache-hit != 'true'
         run: |
           # Extract XAPK (it's a ZIP file)
           if [ -f "UBox.xapk" ]; then
@@ -92,6 +103,20 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Create AVD, install app, and snapshot
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          force-avd-creation: false
+          arch: x86_64
+          profile: "Galaxy Nexus"
+          ram-size: 8192
+          cores: 3
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          script: bash scripts/install-app.sh
+
       - name: Run Android Emulator with ARM translation (Attempt 1)
         id: emulator-attempt-1
         continue-on-error: true
@@ -104,6 +129,7 @@ jobs:
           profile: "Galaxy Nexus"
           ram-size: 8192
           cores: 3
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
       - name: Run Android Emulator with ARM translation (Attempt 2)
@@ -118,7 +144,8 @@ jobs:
           arch: x86_64
           profile: "Galaxy Nexus"
           cores: 3
-          ram-size: 4096
+          ram-size: 8192
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
       - name: Run Android Emulator with ARM translation (Attempt 3)
@@ -134,6 +161,7 @@ jobs:
           profile: "Galaxy Nexus"
           cores: 3
           ram-size: 8192
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
       - name: Run Android Emulator with ARM translation (Attempt 4)
@@ -148,6 +176,7 @@ jobs:
           profile: "Galaxy Nexus"
           cores: 3
           ram-size: 8192
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
       # - name: Upload screenshots
