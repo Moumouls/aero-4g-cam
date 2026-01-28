@@ -152,7 +152,7 @@ async function recordCamera() {
         await cancelNotificationButton.click();
 
         const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
-        await tutoHomeButton.waitForExist({ timeout: 10000 });
+        await tutoHomeButton.waitForExist({ timeout: 30000 });
         // click to specific location using W3C Actions API
         await skipTuto(driver);
 

@@ -113,7 +113,7 @@ jobs:
           arch: x86_64
           profile: "Galaxy Nexus"
           ram-size: 8192
-          cores: 3
+          cores: 4
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/install-app.sh
 
@@ -128,7 +128,7 @@ jobs:
           arch: x86_64
           profile: "Galaxy Nexus"
           ram-size: 8192
-          cores: 3
+          cores: 4
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
 
@@ -143,7 +143,7 @@ jobs:
           force-avd-creation: false
           arch: x86_64
           profile: "Galaxy Nexus"
-          cores: 3
+          cores: 4
           ram-size: 8192
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
@@ -159,7 +159,7 @@ jobs:
           force-avd-creation: false
           arch: x86_64
           profile: "Galaxy Nexus"
-          cores: 3
+          cores: 4
           ram-size: 8192
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
@@ -174,7 +174,7 @@ jobs:
           force-avd-creation: false
           arch: x86_64
           profile: "Galaxy Nexus"
-          cores: 3
+          cores: 4
           ram-size: 8192
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           script: bash scripts/run-automation.sh
