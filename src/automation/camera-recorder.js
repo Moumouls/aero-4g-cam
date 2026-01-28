@@ -114,22 +114,17 @@ async function recordCamera() {
 
         const element = await driver.$(IDS.AGREEMENT_BUTTON);
         await element.waitForExist({ timeout: 30000 });
+        await sleep(1000);
         await element.click();
 
         const countrySelectButton = await driver.$(IDS.COUNTRY_SELECT_BUTTON);
-        await countrySelectButton.waitForExist({ timeout: 10000 });
-        // Wait for the country text to match the expected value
-        await driver.waitUntil(
-            async () => {
-                const text = await countrySelectButton.getAttribute('text');
-                return ['FRANCE', 'UNITED STATES'].includes(text);
-            },
-            {
-                timeout: 10000,
-                timeoutMsg: `Expected country text to be "FRANCE" or "UNITED STATES" but it didn't match within timeout`
-            }
-        );
+        await countrySelectButton.waitForExist({ timeout: 30000 });
+        await countrySelectButton.click();
 
+
+        const selectFranceButton = await driver.$(`//android.widget.TextView[@text="Andorra"]`);
+        await selectFranceButton.waitForExist({ timeout: 30000 });
+        await selectFranceButton.click();
 
         const firstLoginButton = await driver.$(IDS.PRE_LOGIN_BUTTON);
         await firstLoginButton.waitForExist({ timeout: 10000 });
@@ -150,6 +145,13 @@ async function recordCamera() {
         const cancelNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
         await cancelNotificationButton.waitForExist({ timeout: 30000 });
         await cancelNotificationButton.click();
+
+        await sleep(1000);
+        const updateNotificationButton = await driver.$(IDS.CANCEL_NOTIFICATION_BUTTON);
+        // We can have a second notification about update
+        if (await updateNotificationButton.isExisting()) {
+            await updateNotificationButton.click();
+        }
 
         const tutoHomeButton = await driver.$(IDS.TUTO_CONTAINER);
         await tutoHomeButton.waitForExist({ timeout: 30000 });
@@ -221,7 +223,7 @@ async function recordCamera() {
 
     } catch (error) {
         console.error(error);
-        await driver.saveScreenshot('./screenshots/error.png');
+        await driver.saveScreenshot(`./screenshots/error-${Date.now()}.png`);
         process.exit(1);
     }
 

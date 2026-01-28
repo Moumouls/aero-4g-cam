@@ -150,3 +150,6 @@ recordings/
 !recordings/.gitkeep
 recordings/
 !recordings/.gitkeep
+screenshots/
+!screenshots/.gitkeep
+*.xapk
