@@ -8,6 +8,7 @@
     "setup": "./setup.sh",
     "dev": "./scripts/dev.sh",
     "start": "./scripts/start.sh",
+    "extract": "./scripts/extract-apks.sh",
     "appium:install-driver": "appium driver install uiautomator2",
     "appium:list-drivers": "appium driver list"
   },
