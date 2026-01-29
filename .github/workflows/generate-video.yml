@@ -19,20 +19,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Cache Android SDK (system images)
-        uses: actions/cache@v4
-        with:
-          path: |
-            /usr/local/lib/android/sdk/system-images
-            /usr/local/lib/android/sdk/platforms
-            /usr/local/lib/android/sdk/platform-tools
-            /usr/local/lib/android/sdk/emulator
-            /usr/local/lib/android/sdk/cmdline-tools
-          key: android-sdk-${{ runner.os }}-api-35-google_apis-x86_64
-          restore-keys: |
-            android-sdk-${{ runner.os }}-api-35-google_apis-
-            android-sdk-${{ runner.os }}-
-
       - name: Cache Android AVD
         id: avd-cache
         uses: actions/cache@v4
