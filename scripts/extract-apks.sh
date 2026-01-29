@@ -6,16 +6,28 @@ echo "📦 Extracting split APKs from XAPK..."
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT_DIR"
 
-XAPK_FILE="UBox.xapk"
 SPLIT_APKS_DIR="split-apks"
 OBB_DIR="obb"
 
-if [ ! -f "$XAPK_FILE" ]; then
-    echo "❌ UBox.xapk not found at $ROOT_DIR/$XAPK_FILE"
+shopt -s nullglob
+XAPK_FILES=("$ROOT_DIR"/*.xapk)
+shopt -u nullglob
+
+if [ "${#XAPK_FILES[@]}" -eq 0 ]; then
+    echo "❌ No .xapk found at $ROOT_DIR"
     exit 1
 fi
 
-echo "Found UBox.xapk, re-extracting split APKs..."
+if [ "${#XAPK_FILES[@]}" -gt 1 ]; then
+    echo "❌ Multiple .xapk files found at $ROOT_DIR"
+    printf ' - %s\n' "${XAPK_FILES[@]}"
+    exit 1
+fi
+
+XAPK_FILE="${XAPK_FILES[0]}"
+XAPK_NAME="$(basename "$XAPK_FILE")"
+
+echo "Found $XAPK_NAME, re-extracting split APKs..."
 
 rm -rf "$SPLIT_APKS_DIR"
 mkdir -p "$SPLIT_APKS_DIR"
