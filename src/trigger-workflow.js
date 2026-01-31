@@ -183,7 +183,8 @@ export default {
       const parisParts = parisFormatter.formatToParts(scheduledDate);
       const parisWeekday = parisParts.find((part) => part.type === 'weekday')?.value;
       const parisHour = Number(parisParts.find((part) => part.type === 'hour')?.value);
-
+      console.log('Paris weekday:', parisWeekday);
+      console.log('Paris hour:', parisHour);
       const weekendHours = new Set([9, 10, 11, 13, 14, 15, 16]);
       const weekdayHours = new Set([10, 14]);
       const isWeekend = parisWeekday === 'Sat' || parisWeekday === 'Sun';
