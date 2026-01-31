@@ -171,7 +171,30 @@ export default {
    */
   async scheduled(event, env, ctx) {
     try {
-      console.log('Cron trigger received at:', new Date(event.scheduledTime).toISOString());
+      const scheduledDate = new Date(event.scheduledTime);
+      console.log('Cron trigger received at:', scheduledDate.toISOString());
+
+      const parisFormatter = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Paris',
+        weekday: 'short',
+        hour: 'numeric',
+        hour12: false,
+      });
+      const parisParts = parisFormatter.formatToParts(scheduledDate);
+      const parisWeekday = parisParts.find((part) => part.type === 'weekday')?.value;
+      const parisHour = Number(parisParts.find((part) => part.type === 'hour')?.value);
+
+      const weekendHours = new Set([9, 10, 11, 13, 14, 15, 16]);
+      const weekdayHours = new Set([10, 14]);
+      const isWeekend = parisWeekday === 'Sat' || parisWeekday === 'Sun';
+      const shouldRun = Number.isFinite(parisHour) && (isWeekend ? weekendHours : weekdayHours).has(parisHour);
+
+      if (!shouldRun) {
+        console.log(
+          `Skipping cron: Paris time ${parisWeekday} ${String(parisHour).padStart(2, '0')}h not in schedule.`
+        );
+        return;
+      }
 
       // Appel à la fonction pour déclencher le workflow
       const response = await triggerGitHubWorkflow(env);
